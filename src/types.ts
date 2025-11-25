@@ -4,7 +4,7 @@ export interface LinkItem {
   title: string;
   description: string;
   tags: string[];
-  createdAt: number;
+  created_at: string;
   favorite: boolean;
 }
 

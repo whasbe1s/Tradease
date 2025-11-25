@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { supabase } from '../lib/supabaseClient';
 import { LinkItem } from '../types';
-
-const STORAGE_KEY = 'nothing_links_db';
 
 type SortMode = 'newest' | 'oldest' | 'az' | 'za';
 type BulkMode = 'none' | 'add_tag' | 'remove_tag';
 
-export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'info') => void) => {
+export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'info', onUndo?: () => void) => void) => {
     const [links, setLinks] = useState<LinkItem[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortMode, setSortMode] = useState<SortMode>('newest');
@@ -15,42 +14,85 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
     const [bulkMode, setBulkMode] = useState<BulkMode>('none');
     const [bulkInput, setBulkInput] = useState('');
 
-    // Initial Load
-    useEffect(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                const migrated = parsed.map((item: any) => ({
-                    ...item,
-                    favorite: item.favorite || false
-                }));
-                setLinks(migrated);
-            } catch (e) {
-                console.error("Failed to load links", e);
-            }
+    // Fetch Links
+    const fetchLinks = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('links')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching links:', error);
+            addToast('Failed to load links', 'error');
+        } else {
+            setLinks(data || []);
         }
-    }, []);
+    }, [addToast]);
 
-    // Persistence
+    // Initial Load & Real-time Subscription
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(links));
-    }, [links]);
+        fetchLinks();
 
-    const addLink = useCallback((newLink: LinkItem) => {
+        const channel = supabase
+            .channel('links_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'links' }, (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    setLinks(prev => [payload.new as LinkItem, ...prev]);
+                } else if (payload.eventType === 'UPDATE') {
+                    setLinks(prev => prev.map(l => l.id === payload.new.id ? payload.new as LinkItem : l));
+                } else if (payload.eventType === 'DELETE') {
+                    setLinks(prev => prev.filter(l => l.id !== payload.old.id));
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchLinks]);
+
+    const addLink = useCallback(async (newLink: LinkItem) => {
+        // Optimistic update
         setLinks(prev => [newLink, ...prev]);
-        addToast("Link established.", 'success');
-    }, [addToast]);
 
-    const updateLink = useCallback((id: string, updates: Partial<LinkItem>) => {
+        // We don't need to send ID as Supabase generates it, but if we generate it client-side (UUID) we can send it.
+        // The schema says ID DEFAULT gen_random_uuid(), so we can omit it OR send it if we generated a valid UUID.
+        // Let's assume newLink has a temporary ID or a valid UUID. 
+        // Ideally we should let Supabase generate ID, but our UI needs one immediately.
+        // If we generated a UUID, we can send it.
+
+        const { error } = await supabase.from('links').insert([newLink]);
+
+        if (error) {
+            console.error('Error adding link:', error);
+            addToast('Failed to add link', 'error');
+            // Revert optimistic update
+            fetchLinks();
+        } else {
+            addToast("Link established.", 'success');
+        }
+    }, [addToast, fetchLinks]);
+
+    const updateLink = useCallback(async (id: string, updates: Partial<LinkItem>) => {
+        // Optimistic update
         setLinks(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
-        addToast("Link updated.", 'success');
-    }, [addToast]);
 
-    const deleteLink = useCallback((id: string) => {
+        const { error } = await supabase.from('links').update(updates).eq('id', id);
+
+        if (error) {
+            console.error('Error updating link:', error);
+            addToast('Failed to update link', 'error');
+            fetchLinks();
+        } else {
+            addToast("Link updated.", 'success');
+        }
+    }, [addToast, fetchLinks]);
+
+    const deleteLink = useCallback(async (id: string) => {
         const linkToDelete = links.find(l => l.id === id);
         if (!linkToDelete) return;
 
+        // Optimistic update
         setLinks(prev => prev.filter(l => l.id !== id));
         setSelectedIds(prev => {
             const next = new Set(prev);
@@ -58,41 +100,48 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
             return next;
         });
 
-        // Add toast with undo
-        addToast("Entry deleted.", 'info', () => {
-            // Undo: restore the link
-            setLinks(prev => [linkToDelete, ...prev]);
-        });
-    }, [links, addToast]);
+        const { error } = await supabase.from('links').delete().eq('id', id);
 
-    const handleRemoveTag = useCallback((id: string, tag: string) => {
-        setLinks(prev => prev.map(l => {
-            if (l.id === id) {
-                return { ...l, tags: l.tags.filter(t => t !== tag) };
-            }
-            return l;
-        }));
+        if (error) {
+            console.error('Error deleting link:', error);
+            addToast('Failed to delete link', 'error');
+            fetchLinks();
+        } else {
+            // Add toast with undo
+            addToast("Entry deleted.", 'info', async () => {
+                // Undo: restore the link
+                const { error: undoError } = await supabase.from('links').insert([linkToDelete]);
+                if (undoError) {
+                    addToast('Failed to undo delete', 'error');
+                }
+            });
+        }
+    }, [links, addToast, fetchLinks]);
+
+    const handleRemoveTag = useCallback(async (id: string, tag: string) => {
+        const link = links.find(l => l.id === id);
+        if (!link) return;
+
+        const newTags = link.tags.filter(t => t !== tag);
+        updateLink(id, { tags: newTags });
         addToast(`Tag #${tag} removed.`, 'info');
-    }, [addToast]);
+    }, [links, updateLink, addToast]);
 
     const handleAddTag = useCallback((id: string, tag: string) => {
-        setLinks(prev => prev.map(l => {
-            if (l.id === id && !l.tags.includes(tag)) {
-                return { ...l, tags: [...l.tags, tag] };
-            }
-            return l;
-        }));
-        addToast(`Tag #${tag} added.`, 'success');
-    }, [addToast]);
+        // Not used in UI anymore but kept for compatibility
+        const link = links.find(l => l.id === id);
+        if (!link) return;
+        if (!link.tags.includes(tag)) {
+            updateLink(id, { tags: [...link.tags, tag] });
+            addToast(`Tag #${tag} added.`, 'success');
+        }
+    }, [links, updateLink, addToast]);
 
     const toggleFavorite = useCallback((id: string) => {
-        setLinks(prev => prev.map(l => {
-            if (l.id === id) {
-                return { ...l, favorite: !l.favorite };
-            }
-            return l;
-        }));
-    }, []);
+        const link = links.find(l => l.id === id);
+        if (!link) return;
+        updateLink(id, { favorite: !link.favorite });
+    }, [links, updateLink]);
 
     // Bulk Actions
     const toggleSelection = useCallback((id: string) => {
@@ -125,12 +174,15 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
         });
 
         result.sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime();
+            const dateB = new Date(b.created_at).getTime();
+
             switch (sortMode) {
-                case 'oldest': return a.createdAt - b.createdAt;
+                case 'oldest': return dateA - dateB;
                 case 'az': return a.title.localeCompare(b.title);
                 case 'za': return b.title.localeCompare(a.title);
                 case 'newest':
-                default: return b.createdAt - a.createdAt;
+                default: return dateB - dateA;
             }
         });
         return result;
@@ -148,38 +200,28 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
     }, []);
 
     const performBulkAction = useCallback((mode: BulkMode, tag: string) => {
-        if (mode === 'none') return;
+        // Not used in UI anymore
+    }, []);
 
-        const normalizedTag = tag.trim().toLowerCase();
-
-        setLinks(prev => prev.map(link => {
-            if (!selectedIds.has(link.id)) return link;
-
-            if (mode === 'add_tag') {
-                if (normalizedTag && !link.tags.includes(normalizedTag)) {
-                    return { ...link, tags: [...link.tags, normalizedTag] };
-                }
-            } else if (mode === 'remove_tag') {
-                if (normalizedTag) {
-                    return { ...link, tags: link.tags.filter(t => t !== normalizedTag) };
-                }
-            }
-            return link;
-        }));
-
-        addToast(`Bulk action complete: ${selectedIds.size} items updated.`, 'success');
-        setBulkMode('none');
-        setBulkInput('');
-        setSelectedIds(new Set());
-    }, [selectedIds, addToast]);
-
-    const performBulkDelete = useCallback(() => {
+    const performBulkDelete = useCallback(async () => {
         if (window.confirm(`Delete ${selectedIds.size} items?`)) {
+            const ids = Array.from(selectedIds);
+
+            // Optimistic
             setLinks(prev => prev.filter(l => !selectedIds.has(l.id)));
-            addToast(`Deleted ${selectedIds.size} items.`, 'info');
             setSelectedIds(new Set());
+
+            const { error } = await supabase.from('links').delete().in('id', ids);
+
+            if (error) {
+                console.error('Error bulk deleting:', error);
+                addToast('Failed to delete items', 'error');
+                fetchLinks();
+            } else {
+                addToast(`Deleted ${ids.length} items.`, 'info');
+            }
         }
-    }, [selectedIds, addToast]);
+    }, [selectedIds, addToast, fetchLinks]);
 
     return {
         links,

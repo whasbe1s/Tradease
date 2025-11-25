@@ -62,7 +62,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({
         {/* Top Row: Date & Actions */}
         <div className="flex justify-between items-start mb-4 pl-6">
           <span className="text-[10px] font-mono text-nothing-dim/60 pt-1">
-            {new Date(link.createdAt).toLocaleDateString()}
+            {new Date(link.created_at).toLocaleDateString()}
           </span>
 
           <div className="flex items-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity duration-200">

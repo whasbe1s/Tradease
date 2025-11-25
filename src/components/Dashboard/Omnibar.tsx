@@ -52,10 +52,10 @@ export const Omnibar: React.FC<OmnibarProps> = ({ searchQuery, setSearchQuery, o
             const newLink: LinkItem = {
                 id: crypto.randomUUID(),
                 url: input,
-                title: enriched.title,
-                description: enriched.description,
-                tags: enriched.tags,
-                createdAt: Date.now(),
+                title: enriched.title || new URL(input).hostname,
+                description: enriched.description || '',
+                tags: enriched.tags || [],
+                created_at: new Date().toISOString(),
                 favorite: false,
             };
 
