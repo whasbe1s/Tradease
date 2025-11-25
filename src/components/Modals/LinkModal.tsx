@@ -1,59 +1,44 @@
-import React, { useState } from 'react';
-import { X, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Edit2 } from 'lucide-react';
 import { Button } from '../Button';
-import { enrichLinkData } from '../../services/geminiService';
 import { LinkItem } from '../../types';
 
-interface AddLinkModalProps {
+interface LinkModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAddLink: (link: LinkItem) => void;
-    addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+    onUpdate: (id: string, updates: Partial<LinkItem>) => void;
+    linkData: LinkItem | null;
 }
 
-export const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onAddLink, addToast }) => {
+export const LinkModal: React.FC<LinkModalProps> = ({ isOpen, onClose, onUpdate, linkData }) => {
     const [urlInput, setUrlInput] = useState('');
     const [titleInput, setTitleInput] = useState('');
+    const [descriptionInput, setDescriptionInput] = useState('');
     const [tagsInput, setTagsInput] = useState('');
-    const [isEnriching, setIsEnriching] = useState(false);
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        if (isOpen && linkData) {
+            setUrlInput(linkData.url);
+            setTitleInput(linkData.title);
+            setDescriptionInput(linkData.description);
+            setTagsInput(linkData.tags.join(', '));
+        }
+    }, [isOpen, linkData]);
+
+    if (!isOpen || !linkData) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!urlInput) return;
 
-        setIsEnriching(true);
+        const manualTags = tagsInput.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
 
-        try {
-            const enriched = await enrichLinkData(urlInput, titleInput);
-
-            const manualTags = tagsInput.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
-            const aiTags = enriched.tags.map(t => t.toLowerCase());
-            const finalTags = Array.from(new Set([...manualTags, ...aiTags]));
-
-            const newLink: LinkItem = {
-                id: crypto.randomUUID(),
-                url: urlInput,
-                title: enriched.title,
-                description: enriched.description,
-                tags: finalTags,
-                createdAt: Date.now(),
-                favorite: false,
-            };
-
-            onAddLink(newLink);
-
-            // Reset & Close
-            setUrlInput('');
-            setTitleInput('');
-            setTagsInput('');
-            onClose();
-        } catch (e) {
-            addToast("Failed to process link.", 'error');
-        } finally {
-            setIsEnriching(false);
-        }
+        onUpdate(linkData.id, {
+            url: urlInput,
+            title: titleInput,
+            description: descriptionInput,
+            tags: manualTags
+        });
+        onClose();
     };
 
     return (
@@ -69,8 +54,8 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onA
                 </button>
 
                 <h2 className="text-2xl font-bold font-mono mb-8 uppercase flex items-center gap-2">
-                    <Zap className="text-nothing-accent" size={24} fill="currentColor" />
-                    New Entry
+                    <Edit2 className="text-nothing-accent" size={24} />
+                    Edit Entry
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -87,18 +72,28 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onA
                     </div>
 
                     <div>
-                        <label className="block font-mono text-xs uppercase tracking-widest mb-2 text-nothing-dim">Title (Optional)</label>
+                        <label className="block font-mono text-xs uppercase tracking-widest mb-2 text-nothing-dim">Title</label>
                         <input
                             type="text"
                             value={titleInput}
                             onChange={(e) => setTitleInput(e.target.value)}
                             className="w-full bg-nothing-surface border border-nothing-dark p-3 font-mono text-sm focus:outline-none focus:border-nothing-accent focus:ring-1 focus:ring-nothing-accent transition-all rounded-none placeholder:text-nothing-dark/30"
-                            placeholder="Leave empty for AI auto-detect"
+                            placeholder="Link Title"
                         />
                     </div>
 
                     <div>
-                        <label className="block font-mono text-xs uppercase tracking-widest mb-2 text-nothing-dim">Tags (Optional)</label>
+                        <label className="block font-mono text-xs uppercase tracking-widest mb-2 text-nothing-dim">Description</label>
+                        <textarea
+                            value={descriptionInput}
+                            onChange={(e) => setDescriptionInput(e.target.value)}
+                            className="w-full bg-nothing-surface border border-nothing-dark p-3 font-mono text-sm focus:outline-none focus:border-nothing-accent focus:ring-1 focus:ring-nothing-accent transition-all rounded-none placeholder:text-nothing-dark/30 h-24 resize-none"
+                            placeholder="Description..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block font-mono text-xs uppercase tracking-widest mb-2 text-nothing-dim">Tags</label>
                         <input
                             type="text"
                             value={tagsInput}
@@ -116,19 +111,11 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({ isOpen, onClose, onA
                         >
                             Cancel
                         </button>
-                        <Button type="submit" isLoading={isEnriching}>
-                            {isEnriching ? 'Processing...' : 'Confirm'}
+                        <Button type="submit">
+                            Save Changes
                         </Button>
                     </div>
                 </form>
-
-                {isEnriching && (
-                    <div className="absolute bottom-2 left-8 right-8 text-center">
-                        <p className="text-[10px] font-mono text-nothing-dim animate-pulse">
-                            MODELS.GENERATE_CONTENT :: GEMINI-2.5-FLASH
-                        </p>
-                    </div>
-                )}
             </div>
         </div>
     );

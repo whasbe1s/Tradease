@@ -1,11 +1,9 @@
 import React from 'react';
-import { Star, Filter, ArrowUpDown, CheckSquare, Square } from 'lucide-react';
+import { Filter, ArrowUpDown, CheckSquare, Square } from 'lucide-react';
 
 interface ControlsProps {
     filteredCount: number;
     selectedCount: number;
-    showFavorites: boolean;
-    setShowFavorites: (show: boolean) => void;
     sortMode: 'newest' | 'oldest' | 'az' | 'za';
     setSortMode: (mode: 'newest' | 'oldest' | 'az' | 'za') => void;
     onSelectAll: () => void;
@@ -16,8 +14,6 @@ interface ControlsProps {
 export const Controls: React.FC<ControlsProps> = ({
     filteredCount,
     selectedCount,
-    showFavorites,
-    setShowFavorites,
     sortMode,
     setSortMode,
     onSelectAll,
@@ -38,17 +34,7 @@ export const Controls: React.FC<ControlsProps> = ({
 
             {/* Control Unit */}
             <div className="flex items-stretch border border-nothing-dark bg-nothing-base shadow-[2px_2px_0px_0px_rgba(34,34,34,0.1)] rounded-none overflow-hidden">
-                {/* Favorites Toggle */}
-                <button
-                    onClick={() => setShowFavorites(!showFavorites)}
-                    className={`flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase transition-colors border-r border-nothing-dark/10 ${showFavorites
-                            ? 'bg-nothing-dark text-nothing-base'
-                            : 'hover:bg-nothing-surface text-nothing-dark'
-                        }`}
-                >
-                    <Star size={14} className={showFavorites ? "fill-current" : ""} />
-                    <span className="hidden sm:inline">Favs</span>
-                </button>
+
 
                 {/* Sort Dropdown Container */}
                 <div className="relative border-r border-nothing-dark/10 bg-nothing-base hover:bg-nothing-surface transition-colors flex items-center">

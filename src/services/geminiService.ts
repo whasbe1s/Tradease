@@ -13,7 +13,7 @@ const LinkSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-export const enrichLinkData = async (url: string, userTitle?: string): Promise<{ title: string; description: string; tags: string[] }> => {
+export const enrichLinkData = async (url: string, userTitle?: string, options?: { skipTags?: boolean }): Promise<{ title: string; description: string; tags: string[] }> => {
   try {
     const prompt = `
       Analyze this URL: ${url}.
@@ -22,7 +22,7 @@ export const enrichLinkData = async (url: string, userTitle?: string): Promise<{
       Task:
       1. Identify a clean, concise title if the user didn't provide a good one.
       2. Write a very short, punchy description (max 15 words) in a "tech-minimalist" tone.
-      3. Generate 3-5 relevant, single-word tags (lowercase).
+      ${options?.skipTags ? '3. Return an empty array for tags.' : '3. Generate 3-5 relevant, single-word tags (lowercase).'}
       
       Return a valid JSON object with the keys: "title", "description", "tags".
       Do not wrap the output in markdown code blocks. Just return the raw JSON string.

@@ -10,7 +10,7 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
     const [links, setLinks] = useState<LinkItem[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortMode, setSortMode] = useState<SortMode>('newest');
-    const [showFavorites, setShowFavorites] = useState(false);
+    const [filterMode, setFilterMode] = useState<'all' | 'inbox' | 'read-later' | 'favorites'>('all');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [bulkMode, setBulkMode] = useState<BulkMode>('none');
     const [bulkInput, setBulkInput] = useState('');
@@ -42,15 +42,28 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
         addToast("Link established.", 'success');
     }, [addToast]);
 
+    const updateLink = useCallback((id: string, updates: Partial<LinkItem>) => {
+        setLinks(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
+        addToast("Link updated.", 'success');
+    }, [addToast]);
+
     const deleteLink = useCallback((id: string) => {
+        const linkToDelete = links.find(l => l.id === id);
+        if (!linkToDelete) return;
+
         setLinks(prev => prev.filter(l => l.id !== id));
         setSelectedIds(prev => {
             const next = new Set(prev);
             next.delete(id);
             return next;
         });
-        addToast("Entry deleted.", 'info');
-    }, [addToast]);
+
+        // Add toast with undo
+        addToast("Entry deleted.", 'info', () => {
+            // Undo: restore the link
+            setLinks(prev => [linkToDelete, ...prev]);
+        });
+    }, [links, addToast]);
 
     const handleRemoveTag = useCallback((id: string, tag: string) => {
         setLinks(prev => prev.map(l => {
@@ -93,7 +106,15 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
 
     const filteredLinks = useMemo(() => {
         let result = links.filter(link => {
-            if (showFavorites && !link.favorite) return false;
+            // Smart Feeds Logic
+            if (filterMode === 'inbox') {
+                if (link.tags.length > 0) return false;
+            } else if (filterMode === 'read-later') {
+                if (!link.tags.includes('read-later')) return false;
+            } else if (filterMode === 'favorites') {
+                if (!link.favorite) return false;
+            }
+
             const q = searchQuery.toLowerCase();
             return (
                 link.title.toLowerCase().includes(q) ||
@@ -113,7 +134,7 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
             }
         });
         return result;
-    }, [links, searchQuery, sortMode, showFavorites]);
+    }, [links, searchQuery, sortMode, filterMode]);
 
     const selectAllFiltered = useCallback(() => {
         const ids = filteredLinks.map(l => l.id);
@@ -167,8 +188,8 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
         setSearchQuery,
         sortMode,
         setSortMode,
-        showFavorites,
-        setShowFavorites,
+        filterMode,
+        setFilterMode,
         selectedIds,
         toggleSelection,
         selectAllFiltered,
@@ -180,6 +201,7 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
         performBulkAction,
         performBulkDelete,
         addLink,
+        updateLink,
         deleteLink,
         handleRemoveTag,
         handleAddTag,
