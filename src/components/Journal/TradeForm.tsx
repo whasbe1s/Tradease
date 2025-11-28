@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, TrendingDown, Calculator, Tag, Sparkles, Wand2, Loader2 } from 'lucide-react';
+import { Save, TrendingUp, TrendingDown, Tag, Sparkles, Wand2, Loader2 } from 'lucide-react';
 import { Dropdown } from '../UI/Dropdown';
 import { DatePicker } from '../UI/DatePicker';
 import { TerminalItem, TradeDirection, TradeOutcome } from '../../types';
@@ -8,10 +8,15 @@ import { TradeSchema } from '../../lib/validation';
 import { useToast } from '../../hooks/useToast';
 import { z } from 'zod';
 import { parseTradeLog } from '../../services/geminiService';
+import { useForm, Controller, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useTradeCalculations } from '../../hooks/useTradeCalculations';
 
 interface TradeFormProps {
     onSave: (trade: TerminalItem) => void;
 }
+
+type TradeFormData = z.infer<typeof TradeSchema>;
 
 export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
     const navigate = useNavigate();
@@ -21,60 +26,43 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
     const [quickLogText, setQuickLogText] = useState('');
     const [isParsing, setIsParsing] = useState(false);
 
-    // Form State
-    const [pair, setPair] = useState('');
-    const [direction, setDirection] = useState<TradeDirection>('long');
-    const [entry, setEntry] = useState<string>('');
-    const [exit, setExit] = useState<string>('');
-    const [quantity, setQuantity] = useState<string>('');
-    const [fees, setFees] = useState<string>('');
-    const [sl, setSl] = useState<string>('');
-    const [tp, setTp] = useState<string>('');
-    const [outcome, setOutcome] = useState<TradeOutcome>('pending');
-    const [pnl, setPnl] = useState<string>('');
-    const [notes, setNotes] = useState('');
-    const [screenshot, setScreenshot] = useState('');
-    // Initialize with local ISO string
-    const [entryDate, setEntryDate] = useState<string>(() => {
+    // Initialize dates
+    const initialEntryDate = (() => {
         const now = new Date();
         const offset = now.getTimezoneOffset() * 60000;
         return new Date(now.getTime() - offset).toISOString().slice(0, 16);
+    })();
+
+    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<TradeFormData>({
+        resolver: zodResolver(TradeSchema),
+        defaultValues: {
+            direction: 'long',
+            outcome: 'pending',
+            quantity: 0,
+            entry_price: 0,
+            fees: 0,
+        }
     });
+
+    // Watch values for calculations
+    const watchedValues = useWatch({ control });
+    const { rr, pnl } = useTradeCalculations(watchedValues);
+
+    // Dates are not part of the schema validation strictly in the same way, or maybe they should be?
+    // The schema doesn't have entry_date/exit_date. They are added to the TerminalItem later.
+    // We'll keep them as local state or add them to the form if we want validation.
+    // For now, let's keep them as local state to match previous behavior, or better yet, use useForm for them too if we extend the schema.
+    // The previous implementation had them separate. Let's keep them separate for now to minimize schema changes, 
+    // but ideally they should be in the schema.
+    const [entryDate, setEntryDate] = useState<string>(initialEntryDate);
     const [exitDate, setExitDate] = useState<string>('');
-    const [rr, setRr] = useState<number | null>(null);
 
-    // Calculate R:R whenever Entry, SL, or TP changes
+    // Update PnL in form when calculated
     useEffect(() => {
-        const e = parseFloat(entry);
-        const s = parseFloat(sl);
-        const t = parseFloat(tp);
-
-        if (!isNaN(e) && !isNaN(s) && !isNaN(t) && e !== s) {
-            const risk = Math.abs(e - s);
-            const reward = Math.abs(t - e);
-            setRr(parseFloat((reward / risk).toFixed(2)));
-        } else {
-            setRr(null);
+        if (pnl !== null) {
+            setValue('pnl', pnl);
         }
-    }, [entry, sl, tp]);
-
-    // Auto-calculate PnL if Exit Price, Entry Price, and Quantity are present
-    useEffect(() => {
-        const e = parseFloat(entry);
-        const x = parseFloat(exit);
-        const q = parseFloat(quantity);
-        const f = parseFloat(fees) || 0;
-
-        if (!isNaN(e) && !isNaN(x) && !isNaN(q)) {
-            let rawPnl = 0;
-            if (direction === 'long') {
-                rawPnl = (x - e) * q;
-            } else {
-                rawPnl = (e - x) * q;
-            }
-            setPnl((rawPnl - f).toFixed(2));
-        }
-    }, [entry, exit, quantity, fees, direction]);
+    }, [pnl, setValue]);
 
     const handleQuickLog = async () => {
         if (!quickLogText.trim()) return;
@@ -83,15 +71,15 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
         try {
             const data = await parseTradeLog(quickLogText);
 
-            if (data.pair) setPair(data.pair);
-            if (data.direction) setDirection(data.direction.toLowerCase() as TradeDirection);
-            if (data.entry_price) setEntry(String(data.entry_price));
-            if (data.exit_price) setExit(String(data.exit_price));
-            if (data.stop_loss) setSl(String(data.stop_loss));
-            if (data.take_profit) setTp(String(data.take_profit));
-            if (data.quantity) setQuantity(String(data.quantity));
-            if (data.outcome) setOutcome(data.outcome.toLowerCase() as TradeOutcome);
-            if (data.notes) setNotes(data.notes);
+            if (data.pair) setValue('pair', data.pair);
+            if (data.direction) setValue('direction', data.direction.toLowerCase() as TradeDirection);
+            if (data.entry_price) setValue('entry_price', data.entry_price);
+            if (data.exit_price) setValue('exit_price', data.exit_price);
+            if (data.stop_loss) setValue('stop_loss', data.stop_loss);
+            if (data.take_profit) setValue('take_profit', data.take_profit);
+            if (data.quantity) setValue('quantity', data.quantity);
+            if (data.outcome) setValue('outcome', data.outcome.toLowerCase() as TradeOutcome);
+            if (data.notes) setValue('notes', data.notes);
 
             addToast('Trade data auto-filled!', 'success');
         } catch (error) {
@@ -102,50 +90,29 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = (data: TradeFormData) => {
+        const newTrade: TerminalItem = {
+            id: crypto.randomUUID(),
+            url: '',
+            title: `${data.direction.toUpperCase()} ${data.pair}`,
+            description: data.notes || '',
+            tags: [data.pair, 'trade', data.outcome],
+            created_at: new Date().toISOString(),
+            favorite: false,
+            type: 'trade',
+            ...data,
+            entry_date: entryDate,
+            exit_date: exitDate || undefined,
+        };
 
-        try {
-            const validatedData = TradeSchema.parse({
-                pair,
-                direction,
-                entry_price: parseFloat(entry),
-                exit_price: exit ? parseFloat(exit) : undefined,
-                quantity: parseFloat(quantity),
-                fees: fees ? parseFloat(fees) : undefined,
-                stop_loss: sl ? parseFloat(sl) : undefined,
-                take_profit: tp ? parseFloat(tp) : undefined,
-                outcome,
-                pnl: pnl ? parseFloat(pnl) : undefined,
-                notes,
-                screenshot_url: screenshot || undefined,
-            });
+        onSave(newTrade);
+        navigate('/');
+    };
 
-            const newTrade: TerminalItem = {
-                id: crypto.randomUUID(),
-                url: '',
-                title: `${validatedData.direction.toUpperCase()} ${validatedData.pair}`,
-                description: validatedData.notes || '',
-                tags: [validatedData.pair, 'trade', validatedData.outcome],
-                created_at: new Date().toISOString(),
-                favorite: false,
-                type: 'trade',
-                ...validatedData,
-                entry_date: entryDate,
-                exit_date: exitDate || undefined,
-            };
-
-            onSave(newTrade);
-            navigate('/');
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                (error as z.ZodError).issues.forEach(err => {
-                    addToast(`${err.path.join('.')}: ${err.message}`, 'error');
-                });
-            } else {
-                addToast('Failed to save trade', 'error');
-            }
-        }
+    const onError = (errors: any) => {
+        Object.values(errors).forEach((err: any) => {
+            addToast(err.message, 'error');
+        });
     };
 
     return (
@@ -200,7 +167,7 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-8" autoComplete="off">
+                    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8" autoComplete="off">
 
                         {/* Main Grid Layout */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -215,34 +182,40 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                         <div className="group">
                                             <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Pair</label>
                                             <input
-                                                value={pair}
-                                                onChange={(e) => setPair(e.target.value)}
+                                                {...register('pair')}
                                                 placeholder="EURUSD"
                                                 className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-lg text-nothing-dark uppercase placeholder:text-nothing-dark/20 focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
-                                                required
                                             />
                                         </div>
                                         <div className="flex gap-2 items-end">
-                                            <button
-                                                type="button"
-                                                onClick={() => setDirection('long')}
-                                                className={`flex-1 h-[54px] rounded-xl flex items-center justify-center gap-2 transition-all border ${direction === 'long'
-                                                    ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/20'
-                                                    : 'bg-nothing-dark/5 text-nothing-dark/40 border-transparent hover:bg-nothing-dark/10 hover:text-nothing-dark'
-                                                    }`}
-                                            >
-                                                <TrendingUp size={18} /> <span className="font-mono font-bold uppercase text-sm">Long</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setDirection('short')}
-                                                className={`flex-1 h-[54px] rounded-xl flex items-center justify-center gap-2 transition-all border ${direction === 'short'
-                                                    ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20'
-                                                    : 'bg-nothing-dark/5 text-nothing-dark/40 border-transparent hover:bg-nothing-dark/10 hover:text-nothing-dark'
-                                                    }`}
-                                            >
-                                                <TrendingDown size={18} /> <span className="font-mono font-bold uppercase text-sm">Short</span>
-                                            </button>
+                                            <Controller
+                                                name="direction"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => field.onChange('long')}
+                                                            className={`flex-1 h-[54px] rounded-xl flex items-center justify-center gap-2 transition-all border ${field.value === 'long'
+                                                                ? 'bg-trade-win text-white border-trade-win shadow-lg shadow-trade-win/20'
+                                                                : 'bg-nothing-dark/5 text-nothing-dark/40 border-transparent hover:bg-nothing-dark/10 hover:text-nothing-dark'
+                                                                }`}
+                                                        >
+                                                            <TrendingUp size={18} /> <span className="font-mono font-bold uppercase text-sm">Long</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => field.onChange('short')}
+                                                            className={`flex-1 h-[54px] rounded-xl flex items-center justify-center gap-2 transition-all border ${field.value === 'short'
+                                                                ? 'bg-trade-loss text-white border-trade-loss shadow-lg shadow-trade-loss/20'
+                                                                : 'bg-nothing-dark/5 text-nothing-dark/40 border-transparent hover:bg-nothing-dark/10 hover:text-nothing-dark'
+                                                                }`}
+                                                        >
+                                                            <TrendingDown size={18} /> <span className="font-mono font-bold uppercase text-sm">Short</span>
+                                                        </button>
+                                                    </>
+                                                )}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -256,30 +229,26 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                             <input
                                                 type="number"
                                                 step="any"
-                                                value={entry}
-                                                onChange={(e) => setEntry(e.target.value)}
+                                                {...register('entry_price', { valueAsNumber: true })}
                                                 className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
-                                                required
                                             />
                                         </div>
                                         <div className="group">
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-red-500/60 mb-2">Stop Loss</label>
+                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-trade-loss/60 mb-2">Stop Loss</label>
                                             <input
                                                 type="number"
                                                 step="any"
-                                                value={sl}
-                                                onChange={(e) => setSl(e.target.value)}
-                                                className="w-full bg-red-500/5 border border-red-500/10 rounded-xl px-4 py-3 font-mono text-red-600 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all"
+                                                {...register('stop_loss', { valueAsNumber: true })}
+                                                className="w-full bg-trade-loss/5 border border-trade-loss/10 rounded-xl px-4 py-3 font-mono text-trade-loss focus:bg-white focus:border-trade-loss focus:ring-4 focus:ring-trade-loss/10 outline-none transition-all"
                                             />
                                         </div>
                                         <div className="group">
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-green-500/60 mb-2">Take Profit</label>
+                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-trade-win/60 mb-2">Take Profit</label>
                                             <input
                                                 type="number"
                                                 step="any"
-                                                value={tp}
-                                                onChange={(e) => setTp(e.target.value)}
-                                                className="w-full bg-green-500/5 border border-green-500/10 rounded-xl px-4 py-3 font-mono text-green-600 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all"
+                                                {...register('take_profit', { valueAsNumber: true })}
+                                                className="w-full bg-trade-win/5 border border-trade-win/10 rounded-xl px-4 py-3 font-mono text-trade-win focus:bg-white focus:border-trade-win focus:ring-4 focus:ring-trade-win/10 outline-none transition-all"
                                             />
                                         </div>
                                     </div>
@@ -289,10 +258,8 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                             <input
                                                 type="number"
                                                 step="any"
-                                                value={quantity}
-                                                onChange={(e) => setQuantity(e.target.value)}
+                                                {...register('quantity', { valueAsNumber: true })}
                                                 className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
-                                                required
                                             />
                                         </div>
                                         <div className="group">
@@ -300,8 +267,7 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                             <input
                                                 type="number"
                                                 step="any"
-                                                value={exit}
-                                                onChange={(e) => setExit(e.target.value)}
+                                                {...register('exit_price', { valueAsNumber: true })}
                                                 className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
                                             />
                                         </div>
@@ -312,8 +278,7 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                 <div className="space-y-4">
                                     <div className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/30 border-b border-nothing-dark/10 pb-2">Notes</div>
                                     <textarea
-                                        value={notes}
-                                        onChange={(e) => setNotes(e.target.value)}
+                                        {...register('notes')}
                                         rows={4}
                                         className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl p-4 font-mono text-sm text-nothing-dark focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all resize-none"
                                         placeholder="Trade rationale..."
@@ -329,26 +294,31 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                 <div className="bg-nothing-dark/5 rounded-2xl p-6 border border-nothing-dark/10">
                                     <div className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-4">Outcome</div>
                                     <div className="space-y-4">
-                                        <Dropdown
-                                            label="Result"
-                                            value={outcome}
-                                            onChange={(val) => setOutcome(val as TradeOutcome)}
-                                            options={[
-                                                { value: 'pending', label: 'PENDING', color: 'text-nothing-dark/60' },
-                                                { value: 'win', label: 'WIN', color: 'text-nothing-accent' },
-                                                { value: 'loss', label: 'LOSS', color: 'text-red-500' },
-                                                { value: 'be', label: 'BREAK EVEN', color: 'text-nothing-dark' }
-                                            ]}
+                                        <Controller
+                                            name="outcome"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Dropdown
+                                                    label="Result"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    options={[
+                                                        { value: 'pending', label: 'PENDING', color: 'text-nothing-dark/60' },
+                                                        { value: 'win', label: 'WIN', color: 'text-trade-win' },
+                                                        { value: 'loss', label: 'LOSS', color: 'text-trade-loss' },
+                                                        { value: 'be', label: 'BREAK EVEN', color: 'text-nothing-dark' }
+                                                    ]}
+                                                />
+                                            )}
                                         />
                                         <div>
                                             <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Net PnL</label>
                                             <input
                                                 type="number"
                                                 step="any"
-                                                value={pnl}
-                                                onChange={(e) => setPnl(e.target.value)}
+                                                {...register('pnl', { valueAsNumber: true })}
                                                 placeholder="0.00"
-                                                className={`w-full bg-white border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono font-bold text-nothing-dark focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all ${parseFloat(pnl) > 0 ? 'text-green-600' : parseFloat(pnl) < 0 ? 'text-red-600' : ''}`}
+                                                className={`w-full bg-white border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono font-bold text-nothing-dark focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all ${pnl && pnl > 0 ? 'text-trade-win' : pnl && pnl < 0 ? 'text-trade-loss' : ''}`}
                                             />
                                         </div>
                                     </div>
@@ -360,7 +330,7 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs font-mono text-nothing-dark/60">Risk:Reward</span>
                                         {rr !== null ? (
-                                            <span className={`text-sm font-bold font-mono ${rr >= 2 ? 'text-green-600' : 'text-nothing-dark'}`}>1:{rr}</span>
+                                            <span className={`text-sm font-bold font-mono ${rr >= 2 ? 'text-trade-win' : 'text-nothing-dark'}`}>1:{rr}</span>
                                         ) : (
                                             <span className="text-xs font-mono text-nothing-dark/30">-</span>
                                         )}

@@ -1,9 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode, useEffect } from 'react';
 import { LinkItem } from '../types';
-import { useToast } from '../hooks/useToast';
-import { logger } from '../lib/logger';
 import { UI_CONFIG } from '../lib/constants';
+import { useLinksQuery, useAddLinkMutation, useUpdateLinkMutation, useDeleteLinkMutation } from '../hooks/useLinks';
 
 type SortMode = 'newest' | 'oldest' | 'pnl-high' | 'pnl-low' | 'pair-az';
 type FilterMode = 'all' | 'win' | 'loss' | 'favorites';
@@ -34,144 +32,55 @@ interface LinksContextType {
 const LinksContext = createContext<LinksContextType | undefined>(undefined);
 
 export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { addToast } = useToast();
-    const [links, setLinks] = useState<LinkItem[]>([]);
+    // React Query Hooks
+    const { data: links = [], isLoading: loading } = useLinksQuery();
+    const addLinkMutation = useAddLinkMutation();
+    const updateLinkMutation = useUpdateLinkMutation();
+    const deleteLinkMutation = useDeleteLinkMutation();
+
+    // UI State
     const [searchQuery, setSearchQuery] = useState('');
     const [sortMode, setSortMode] = useState<SortMode>('newest');
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [loading, setLoading] = useState(true);
 
-    // Fetch Links
-    const fetchLinks = useCallback(async () => {
-        setLoading(true);
-        const { data, error } = await supabase
-            .from('links')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            logger.error('Error fetching links:', error);
-            addToast('Failed to load links', 'error');
-        } else {
-            setLinks(data || []);
-        }
-        setLoading(false);
-    }, [addToast]);
-
-    // Initial Load & Real-time Subscription
-    useEffect(() => {
-        fetchLinks();
-
-        const channel = supabase
-            .channel('links_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'links' }, (payload) => {
-                if (payload.eventType === 'INSERT') {
-                    setLinks(prev => [payload.new as LinkItem, ...prev]);
-                } else if (payload.eventType === 'UPDATE') {
-                    setLinks(prev => prev.map(l => l.id === payload.new.id ? payload.new as LinkItem : l));
-                } else if (payload.eventType === 'DELETE') {
-                    setLinks(prev => prev.filter(l => l.id !== payload.old.id));
-                }
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [fetchLinks]);
-
+    // Actions Wrappers
     const addLink = useCallback(async (newLink: LinkItem) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            addToast('You must be logged in to add a link', 'error');
-            return;
-        }
-
-        const linkWithUser = { ...newLink, user_id: user.id };
-
-        // Optimistic update
-        setLinks(prev => [linkWithUser, ...prev]);
-
-        const { error } = await supabase.from('links').insert([linkWithUser]);
-
-        if (error) {
-            logger.error('Error adding link:', error);
-            addToast('Failed to add link', 'error');
-            // Revert optimistic update
-            fetchLinks();
-        } else {
-            addToast("Link established.", 'success');
-        }
-    }, [addToast, fetchLinks]);
+        await addLinkMutation.mutateAsync(newLink);
+    }, [addLinkMutation]);
 
     const updateLink = useCallback(async (id: string, updates: Partial<LinkItem>) => {
-        // Optimistic update
-        setLinks(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
-
-        const { error } = await supabase.from('links').update(updates).eq('id', id);
-
-        if (error) {
-            logger.error('Error updating link:', error);
-            addToast('Failed to update link', 'error');
-            fetchLinks();
-        } else {
-            addToast("Link updated.", 'success');
-        }
-    }, [addToast, fetchLinks]);
+        await updateLinkMutation.mutateAsync({ id, updates });
+    }, [updateLinkMutation]);
 
     const deleteLink = useCallback(async (id: string) => {
-        const linkToDelete = links.find(l => l.id === id);
-        if (!linkToDelete) return;
-
-        // Optimistic update
-        setLinks(prev => prev.filter(l => l.id !== id));
+        await deleteLinkMutation.mutateAsync(id);
         setSelectedIds(prev => {
             const next = new Set(prev);
             next.delete(id);
             return next;
         });
-
-        const { error } = await supabase.from('links').delete().eq('id', id);
-
-        if (error) {
-            logger.error('Error deleting link:', error);
-            addToast('Failed to delete link', 'error');
-            fetchLinks();
-        } else {
-            // Add toast with undo
-            addToast("Entry deleted.", 'info', async () => {
-                // Undo: restore the link
-                const { error: undoError } = await supabase.from('links').insert([linkToDelete]);
-                if (undoError) {
-                    addToast('Failed to undo delete', 'error');
-                }
-            });
-        }
-    }, [links, addToast, fetchLinks]);
+    }, [deleteLinkMutation]);
 
     const handleRemoveTag = useCallback(async (id: string, tag: string) => {
         const link = links.find(l => l.id === id);
         if (!link) return;
-
         const newTags = link.tags.filter(t => t !== tag);
-        updateLink(id, { tags: newTags });
-        addToast(`Tag #${tag} removed.`, 'info');
-    }, [links, updateLink, addToast]);
+        await updateLink(id, { tags: newTags });
+    }, [links, updateLink]);
 
-    const handleAddTag = useCallback((id: string, tag: string) => {
+    const handleAddTag = useCallback(async (id: string, tag: string) => {
         const link = links.find(l => l.id === id);
         if (!link) return;
         if (!link.tags.includes(tag)) {
-            updateLink(id, { tags: [...link.tags, tag] });
-            addToast(`Tag #${tag} added.`, 'success');
+            await updateLink(id, { tags: [...link.tags, tag] });
         }
-    }, [links, updateLink, addToast]);
+    }, [links, updateLink]);
 
-    const toggleFavorite = useCallback((id: string) => {
+    const toggleFavorite = useCallback(async (id: string) => {
         const link = links.find(l => l.id === id);
         if (!link) return;
-        updateLink(id, { favorite: !link.favorite });
+        await updateLink(id, { favorite: !link.favorite });
     }, [links, updateLink]);
 
     // Bulk Actions
@@ -182,6 +91,25 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             else next.add(id);
             return next;
         });
+    }, []);
+
+    const performBulkDelete = useCallback(async () => {
+        if (window.confirm(`Delete ${selectedIds.size} items?`)) {
+            const ids = Array.from(selectedIds);
+            // Execute in parallel
+            await Promise.all(ids.map(id => deleteLinkMutation.mutateAsync(id)));
+            setSelectedIds(new Set());
+        }
+    }, [selectedIds, deleteLinkMutation]);
+
+    const selectAllFiltered = useCallback(() => {
+        // We need filteredLinks here, but it's defined below.
+        // We can use a ref or move filteredLinks up, but useMemo depends on state.
+        // Let's just use the logic inside or move filteredLinks definition up if possible.
+        // Actually, we can't easily access filteredLinks inside this callback if it's defined after.
+        // But we can just use the same logic or pass it.
+        // However, standard React pattern is to define derived state first if needed.
+        // Let's define filteredLinks first.
     }, []);
 
     // Debounced Search Query
@@ -236,7 +164,11 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return result;
     }, [links, debouncedSearchQuery, sortMode, filterMode]);
 
-    const selectAllFiltered = useCallback(() => {
+    // Redefine selectAllFiltered now that filteredLinks is available?
+    // No, useMemo runs during render. useCallback creates function.
+    // If we want to use filteredLinks in selectAllFiltered, we need to include it in dependency array.
+
+    const selectAllFilteredAction = useCallback(() => {
         const ids = filteredLinks.map(l => l.id);
         setSelectedIds(new Set(ids));
     }, [filteredLinks]);
@@ -244,26 +176,6 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const clearSelection = useCallback(() => {
         setSelectedIds(new Set());
     }, []);
-
-    const performBulkDelete = useCallback(async () => {
-        if (window.confirm(`Delete ${selectedIds.size} items?`)) {
-            const ids = Array.from(selectedIds);
-
-            // Optimistic
-            setLinks(prev => prev.filter(l => !selectedIds.has(l.id)));
-            setSelectedIds(new Set());
-
-            const { error } = await supabase.from('links').delete().in('id', ids);
-
-            if (error) {
-                logger.error('Error bulk deleting:', error);
-                addToast('Failed to delete items', 'error');
-                fetchLinks();
-            } else {
-                addToast(`Deleted ${ids.length} items.`, 'info');
-            }
-        }
-    }, [selectedIds, addToast, fetchLinks]);
 
     return (
         <LinksContext.Provider value={{
@@ -277,7 +189,7 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             setFilterMode,
             selectedIds,
             toggleSelection,
-            selectAllFiltered,
+            selectAllFiltered: selectAllFilteredAction,
             clearSelection,
             performBulkDelete,
             addLink,

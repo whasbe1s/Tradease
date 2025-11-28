@@ -6,6 +6,8 @@
   --color-nothing-accent: #A3B087;
   --color-nothing-dark: #FFF8D4;
   --color-nothing-dim: #435663;
+  --color-trade-win: #22c55e;
+  --color-trade-loss: #ef4444;
 
   --font-mono: "JetBrains Mono", monospace;
   --font-sans: "Inter", sans-serif;

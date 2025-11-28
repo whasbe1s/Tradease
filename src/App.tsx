@@ -101,12 +101,18 @@ function AppContent() {
     );
 }
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
 export default function App() {
     return (
-        <AuthProvider>
-            <LinksProvider>
-                <AppContent />
-            </LinksProvider>
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+                <LinksProvider>
+                    <AppContent />
+                </LinksProvider>
+            </AuthProvider>
+        </QueryClientProvider>
     );
 }
