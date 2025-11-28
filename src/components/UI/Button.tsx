@@ -7,18 +7,18 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  variant = 'primary', 
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = 'primary',
   size = 'md',
-  isLoading, 
-  className = '', 
+  isLoading,
+  className = '',
   disabled,
-  ...props 
+  ...props
 }) => {
-  
+
   const baseStyles = "relative font-mono uppercase tracking-widest transition-all duration-200 border border-nothing-dark disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden rounded-none flex items-center justify-center";
-  
+
   const sizeStyles = {
     sm: "text-xs px-3 py-1.5",
     md: "text-sm px-6 py-3"
@@ -31,14 +31,14 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   return (
-    <button 
+    <button
       className={`${baseStyles} ${sizeStyles[size]} ${variants[variant]} ${className}`}
       disabled={disabled || isLoading}
       {...props}
     >
       {/* Glitch/Hover Overlay Effect */}
       <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-75 pointer-events-none" />
-      
+
       <div className="flex items-center justify-center gap-2 relative z-10">
         {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
         {children}

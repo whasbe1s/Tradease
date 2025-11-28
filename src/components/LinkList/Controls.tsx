@@ -4,8 +4,8 @@ import { Filter, ArrowUpDown, CheckSquare, Square } from 'lucide-react';
 interface ControlsProps {
     filteredCount: number;
     selectedCount: number;
-    sortMode: 'newest' | 'oldest' | 'az' | 'za';
-    setSortMode: (mode: 'newest' | 'oldest' | 'az' | 'za') => void;
+    sortMode: 'newest' | 'oldest' | 'pnl-high' | 'pnl-low' | 'pair-az';
+    setSortMode: (mode: 'newest' | 'oldest' | 'pnl-high' | 'pnl-low' | 'pair-az') => void;
     onSelectAll: () => void;
     onClearSelection: () => void;
     areAllSelected: boolean;
@@ -48,8 +48,9 @@ export const Controls: React.FC<ControlsProps> = ({
                     >
                         <option value="newest">Newest</option>
                         <option value="oldest">Oldest</option>
-                        <option value="az">A-Z</option>
-                        <option value="za">Z-A</option>
+                        <option value="pnl-high">Highest PnL</option>
+                        <option value="pnl-low">Lowest PnL</option>
+                        <option value="pair-az">Pair A-Z</option>
                     </select>
                     <div className="absolute right-2 pointer-events-none text-nothing-dark/50">
                         <ArrowUpDown size={10} />

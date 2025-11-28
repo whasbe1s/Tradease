@@ -1,32 +1,62 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { LinkItem } from '../types';
+import { useToast } from '../hooks/useToast';
+import { logger } from '../lib/logger';
+import { UI_CONFIG } from '../lib/constants';
 
-type SortMode = 'newest' | 'oldest' | 'az' | 'za';
-type BulkMode = 'none' | 'add_tag' | 'remove_tag';
+type SortMode = 'newest' | 'oldest' | 'pnl-high' | 'pnl-low' | 'pair-az';
+type FilterMode = 'all' | 'win' | 'loss' | 'favorites';
 
-export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'info', onUndo?: () => void) => void) => {
+interface LinksContextType {
+    links: LinkItem[];
+    filteredLinks: LinkItem[];
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    sortMode: SortMode;
+    setSortMode: (mode: SortMode) => void;
+    filterMode: FilterMode;
+    setFilterMode: (mode: FilterMode) => void;
+    selectedIds: Set<string>;
+    toggleSelection: (id: string) => void;
+    selectAllFiltered: () => void;
+    clearSelection: () => void;
+    performBulkDelete: () => Promise<void>;
+    addLink: (newLink: LinkItem) => Promise<void>;
+    updateLink: (id: string, updates: Partial<LinkItem>) => Promise<void>;
+    deleteLink: (id: string) => Promise<void>;
+    handleRemoveTag: (id: string, tag: string) => Promise<void>;
+    handleAddTag: (id: string, tag: string) => void;
+    toggleFavorite: (id: string) => void;
+    loading: boolean;
+}
+
+const LinksContext = createContext<LinksContextType | undefined>(undefined);
+
+export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { addToast } = useToast();
     const [links, setLinks] = useState<LinkItem[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortMode, setSortMode] = useState<SortMode>('newest');
-    const [filterMode, setFilterMode] = useState<'all' | 'inbox' | 'read-later' | 'favorites'>('all');
+    const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [bulkMode, setBulkMode] = useState<BulkMode>('none');
-    const [bulkInput, setBulkInput] = useState('');
+    const [loading, setLoading] = useState(true);
 
     // Fetch Links
     const fetchLinks = useCallback(async () => {
+        setLoading(true);
         const { data, error } = await supabase
             .from('links')
             .select('*')
             .order('created_at', { ascending: false });
 
         if (error) {
-            console.error('Error fetching links:', error);
+            logger.error('Error fetching links:', error);
             addToast('Failed to load links', 'error');
         } else {
             setLinks(data || []);
         }
+        setLoading(false);
     }, [addToast]);
 
     // Initial Load & Real-time Subscription
@@ -52,19 +82,21 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
     }, [fetchLinks]);
 
     const addLink = useCallback(async (newLink: LinkItem) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            addToast('You must be logged in to add a link', 'error');
+            return;
+        }
+
+        const linkWithUser = { ...newLink, user_id: user.id };
+
         // Optimistic update
-        setLinks(prev => [newLink, ...prev]);
+        setLinks(prev => [linkWithUser, ...prev]);
 
-        // We don't need to send ID as Supabase generates it, but if we generate it client-side (UUID) we can send it.
-        // The schema says ID DEFAULT gen_random_uuid(), so we can omit it OR send it if we generated a valid UUID.
-        // Let's assume newLink has a temporary ID or a valid UUID. 
-        // Ideally we should let Supabase generate ID, but our UI needs one immediately.
-        // If we generated a UUID, we can send it.
-
-        const { error } = await supabase.from('links').insert([newLink]);
+        const { error } = await supabase.from('links').insert([linkWithUser]);
 
         if (error) {
-            console.error('Error adding link:', error);
+            logger.error('Error adding link:', error);
             addToast('Failed to add link', 'error');
             // Revert optimistic update
             fetchLinks();
@@ -80,7 +112,7 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
         const { error } = await supabase.from('links').update(updates).eq('id', id);
 
         if (error) {
-            console.error('Error updating link:', error);
+            logger.error('Error updating link:', error);
             addToast('Failed to update link', 'error');
             fetchLinks();
         } else {
@@ -103,7 +135,7 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
         const { error } = await supabase.from('links').delete().eq('id', id);
 
         if (error) {
-            console.error('Error deleting link:', error);
+            logger.error('Error deleting link:', error);
             addToast('Failed to delete link', 'error');
             fetchLinks();
         } else {
@@ -128,7 +160,6 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
     }, [links, updateLink, addToast]);
 
     const handleAddTag = useCallback((id: string, tag: string) => {
-        // Not used in UI anymore but kept for compatibility
         const link = links.find(l => l.id === id);
         if (!link) return;
         if (!link.tags.includes(tag)) {
@@ -153,40 +184,57 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
         });
     }, []);
 
-    const filteredLinks = useMemo(() => {
-        let result = links.filter(link => {
-            // Smart Feeds Logic
-            if (filterMode === 'inbox') {
-                if (link.tags.length > 0) return false;
-            } else if (filterMode === 'read-later') {
-                if (!link.tags.includes('read-later')) return false;
-            } else if (filterMode === 'favorites') {
-                if (!link.favorite) return false;
-            }
+    // Debounced Search Query
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
-            const q = searchQuery.toLowerCase();
-            return (
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, UI_CONFIG.DEBOUNCE_DELAY);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const filteredLinks = useMemo(() => {
+        // First filter by mode
+        let result = links.filter(link => {
+            switch (filterMode) {
+                case 'win': return link.outcome === 'win';
+                case 'loss': return link.outcome === 'loss';
+                case 'favorites': return link.favorite;
+                default: return true;
+            }
+        });
+
+        // Then filter by search query if present
+        if (debouncedSearchQuery) {
+            const q = debouncedSearchQuery.toLowerCase();
+            result = result.filter(link =>
                 link.title.toLowerCase().includes(q) ||
                 link.url.toLowerCase().includes(q) ||
                 link.tags.some(t => t.toLowerCase().includes(q)) ||
-                link.description.toLowerCase().includes(q)
+                link.description.toLowerCase().includes(q) ||
+                (link.pair && link.pair.toLowerCase().includes(q)) ||
+                (link.notes && link.notes.toLowerCase().includes(q))
             );
-        });
+        }
 
+        // Finally sort
         result.sort((a, b) => {
             const dateA = new Date(a.created_at).getTime();
             const dateB = new Date(b.created_at).getTime();
 
             switch (sortMode) {
                 case 'oldest': return dateA - dateB;
-                case 'az': return a.title.localeCompare(b.title);
-                case 'za': return b.title.localeCompare(a.title);
+                case 'pnl-high': return (b.pnl || 0) - (a.pnl || 0);
+                case 'pnl-low': return (a.pnl || 0) - (b.pnl || 0);
+                case 'pair-az': return (a.pair || a.title || '').localeCompare(b.pair || b.title || '');
                 case 'newest':
                 default: return dateB - dateA;
             }
         });
         return result;
-    }, [links, searchQuery, sortMode, filterMode]);
+    }, [links, debouncedSearchQuery, sortMode, filterMode]);
 
     const selectAllFiltered = useCallback(() => {
         const ids = filteredLinks.map(l => l.id);
@@ -195,12 +243,6 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
 
     const clearSelection = useCallback(() => {
         setSelectedIds(new Set());
-        setBulkMode('none');
-        setBulkInput('');
-    }, []);
-
-    const performBulkAction = useCallback((mode: BulkMode, tag: string) => {
-        // Not used in UI anymore
     }, []);
 
     const performBulkDelete = useCallback(async () => {
@@ -214,7 +256,7 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
             const { error } = await supabase.from('links').delete().in('id', ids);
 
             if (error) {
-                console.error('Error bulk deleting:', error);
+                logger.error('Error bulk deleting:', error);
                 addToast('Failed to delete items', 'error');
                 fetchLinks();
             } else {
@@ -223,30 +265,38 @@ export const useLinks = (addToast: (msg: string, type?: 'success' | 'error' | 'i
         }
     }, [selectedIds, addToast, fetchLinks]);
 
-    return {
-        links,
-        filteredLinks,
-        searchQuery,
-        setSearchQuery,
-        sortMode,
-        setSortMode,
-        filterMode,
-        setFilterMode,
-        selectedIds,
-        toggleSelection,
-        selectAllFiltered,
-        clearSelection,
-        bulkMode,
-        setBulkMode,
-        bulkInput,
-        setBulkInput,
-        performBulkAction,
-        performBulkDelete,
-        addLink,
-        updateLink,
-        deleteLink,
-        handleRemoveTag,
-        handleAddTag,
-        toggleFavorite
-    };
+    return (
+        <LinksContext.Provider value={{
+            links,
+            filteredLinks,
+            searchQuery,
+            setSearchQuery,
+            sortMode,
+            setSortMode,
+            filterMode,
+            setFilterMode,
+            selectedIds,
+            toggleSelection,
+            selectAllFiltered,
+            clearSelection,
+            performBulkDelete,
+            addLink,
+            updateLink,
+            deleteLink,
+            handleRemoveTag,
+            handleAddTag,
+            toggleFavorite,
+            loading
+        }}>
+            {children}
+        </LinksContext.Provider>
+    );
+};
+
+export const useLinksContext = () => {
+    const context = useContext(LinksContext);
+    if (context === undefined) {
+        throw new Error('useLinksContext must be used within a LinksProvider');
+    }
+    return context;
 };

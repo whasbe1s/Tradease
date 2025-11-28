@@ -13,29 +13,29 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
     onBulkDelete
 }) => {
     return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-bottom-10 fade-in duration-200">
-            <div className="bg-nothing-surface text-nothing-dark shadow-[4px_4px_0px_0px_rgba(109,35,35,0.2)] flex items-center rounded-none border border-nothing-dark/10 h-12 px-2">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+            <div className="bg-nothing-surface/80 backdrop-blur-xl text-nothing-dark shadow-2xl flex items-center rounded-2xl border border-nothing-dark/10 h-14 px-2 pl-6">
 
                 {/* Status */}
-                <div className="flex items-center px-4 h-full">
-                    <span className="font-mono font-bold text-sm tracking-wider">{selectedCount} SELECTED</span>
+                <div className="flex items-center h-full mr-4">
+                    <span className="font-mono font-bold text-xs tracking-widest uppercase">{selectedCount} Selected</span>
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-4 bg-nothing-dark/20 mx-2"></div>
+                <div className="w-px h-6 bg-nothing-dark/10 mx-2"></div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2 p-1">
                     <button
                         onClick={onBulkDelete}
-                        className="flex items-center gap-2 px-3 py-1 hover:bg-nothing-accent/10 hover:text-nothing-accent text-xs font-mono uppercase transition-colors text-nothing-dark h-8 rounded-none"
+                        className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 text-[10px] font-bold font-mono uppercase tracking-wider transition-all rounded-xl border border-red-200"
                     >
                         <Trash2 size={14} /> Delete
                     </button>
 
                     <button
                         onClick={onClearSelection}
-                        className="ml-2 w-8 h-8 flex items-center justify-center hover:bg-nothing-dark/5 rounded-none text-nothing-dark/50 hover:text-nothing-dark"
+                        className="w-9 h-9 flex items-center justify-center hover:bg-nothing-dark/10 rounded-xl text-nothing-dark/40 hover:text-nothing-dark transition-colors"
                     >
                         <X size={16} />
                     </button>

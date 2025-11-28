@@ -10,21 +10,23 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
     },
     plugins: [react()],
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
       }
     },
     build: {
+      chunkSizeWarningLimit: 500,
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom', 'lucide-react'],
-            genai: ['@google/genai']
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'ui-vendor': ['lucide-react', 'framer-motion', 'clsx', 'tailwind-merge'],
+            'data-vendor': ['@supabase/supabase-js'],
+            'charts': ['recharts'],
+            '3d': ['@react-three/fiber', 'three', '@shadergradient/react'],
+            'markdown': ['react-markdown'],
+            'validation': ['zod']
           }
         }
       }

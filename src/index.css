@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nothing-base: #313647;
+  --color-nothing-surface: #435663;
+  --color-nothing-accent: #A3B087;
+  --color-nothing-dark: #FFF8D4;
+  --color-nothing-dim: #435663;
+
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Inter", sans-serif;
+
+  --background-image-dot-pattern: radial-gradient(#435663 1px, transparent 1px);
+  --background-size-dot: 20px 20px;
+}
+
+:root {
+  --bento-opacity: 0.5;
+  /* Global bento box opacity - adjust this value (0.1 to 1.0) */
+}
+
+body {
+  background-color: var(--color-nothing-base);
+  color: var(--color-nothing-dark);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar - Auto-hide when not in use */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+
+/* Show scrollbar on hover or when scrolling */
+*:hover::-webkit-scrollbar-thumb,
+*:active::-webkit-scrollbar-thumb {
+  background: var(--color-nothing-accent);
+}
+
+*:hover::-webkit-scrollbar-track,
+*:active::-webkit-scrollbar-track {
+  background: var(--color-nothing-surface);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-nothing-dark);
+}
