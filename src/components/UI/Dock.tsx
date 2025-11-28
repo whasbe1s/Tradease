@@ -1,137 +1,105 @@
-'use client';
-
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../../lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './Tooltip';
-
-interface DockItem {
-    icon: React.ComponentType<{ className?: string; size?: number }>;
-    label: string;
-    onClick?: () => void;
-}
+import * as React from "react"
+import { motion, Variants } from "framer-motion"
+import { cn } from "../../lib/utils"
+import { LucideIcon } from "lucide-react"
 
 interface DockProps {
-    className?: string;
-    items: DockItem[];
-    orientation?: 'horizontal' | 'vertical';
+    className?: string
+    items: {
+        icon: LucideIcon
+        label: string
+        onClick?: () => void
+        isActive?: boolean
+    }[]
 }
 
-export const Dock: React.FC<DockProps> = ({ items, className, orientation = 'horizontal' }) => {
-    const [active, setActive] = useState<string | null>(null);
-    const [hovered, setHovered] = useState<number | null>(null);
-    const isVertical = orientation === 'vertical';
+interface DockIconButtonProps {
+    icon: LucideIcon
+    label: string
+    onClick?: () => void
+    className?: string
+    isActive?: boolean
+}
 
-    return (
-        <div className={cn(
-            "flex items-center justify-center",
-            isVertical ? "h-full" : "w-full",
-            className
-        )}>
-            <motion.div
-                animate={{
-                    y: isVertical ? 0 : [0, -6, 0],
-                    x: 0
-                }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+const floatingAnimation: Variants = {
+    initial: { y: 0 },
+    animate: {
+        y: [-2, 2, -2],
+        transition: {
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+        }
+    }
+}
+
+const DockIconButton = React.forwardRef<HTMLButtonElement, DockIconButtonProps>(
+    ({ icon: Icon, label, onClick, className, isActive }, ref) => {
+        return (
+            <motion.button
+                ref={ref}
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onClick}
                 className={cn(
-                    "flex gap-3 px-4 py-4 rounded-full",
-                    "border border-nothing-dark/10 bg-nothing-base/80 backdrop-blur-xl shadow-2xl",
-                    isVertical ? "flex-col items-center" : "items-end"
+                    "relative group p-3 rounded-2xl",
+                    "transition-colors duration-300",
+                    isActive ? "bg-nothing-dark/10" : "hover:bg-nothing-dark/5",
+                    className
                 )}
-                style={{
-                    transform: isVertical
-                        ? "perspective(800px) rotateY(-10deg)"
-                        : "perspective(800px) rotateX(10deg)",
-                }}
             >
-                <TooltipProvider delayDuration={100}>
-                    {items.map((item, i) => {
-                        const isActive = active === item.label;
-                        const isHovered = hovered === i;
-                        const Icon = item.icon;
+                <Icon
+                    className={cn(
+                        "w-5 h-5 transition-colors duration-300",
+                        isActive ? "text-nothing-accent" : "text-nothing-dark/80 group-hover:text-nothing-dark"
+                    )}
+                />
+                <span className={cn(
+                    "absolute -top-10 left-1/2 -translate-x-1/2",
+                    "px-2 py-1 rounded-lg text-xs font-medium",
+                    "bg-nothing-surface/90 text-nothing-base border border-nothing-dark/10 backdrop-blur-md",
+                    "opacity-0 group-hover:opacity-100",
+                    "transition-all duration-200 translate-y-2 group-hover:translate-y-0 pointer-events-none"
+                )}>
+                    {label}
+                </span>
 
-                        return (
-                            <Tooltip key={item.label}>
-                                <TooltipTrigger>
-                                    <motion.div
-                                        onMouseEnter={() => setHovered(i)}
-                                        onMouseLeave={() => setHovered(null)}
-                                        animate={{
-                                            scale: isHovered ? 1.25 : 1,
-                                            y: isVertical ? 0 : (isHovered ? -8 : 0),
-                                            x: isVertical ? (isHovered ? 8 : 0) : 0,
-                                        }}
-                                        transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                                        className="relative flex flex-col items-center"
-                                    >
-                                        <button
-                                            className={cn(
-                                                "relative w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300",
-                                                isActive ? "bg-nothing-dark/10" : "hover:bg-nothing-dark/5"
-                                            )}
-                                            onClick={() => {
-                                                setActive(item.label);
-                                                item.onClick?.();
-                                            }}
-                                        >
-                                            <Icon
-                                                size={24}
-                                                className={cn(
-                                                    "transition-colors duration-300",
-                                                    isActive ? "text-nothing-accent" : "text-nothing-dark/60 group-hover:text-nothing-dark"
-                                                )}
-                                            />
+                {/* Active Indicator Dot */}
+                {isActive && (
+                    <motion.div
+                        layoutId="activeDot"
+                        className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-nothing-accent"
+                    />
+                )}
+            </motion.button>
+        )
+    }
+)
+DockIconButton.displayName = "DockIconButton"
 
-                                            {/* Glowing ring effect on hover */}
-                                            <AnimatePresence>
-                                                {isHovered && (
-                                                    <motion.span
-                                                        layoutId="glow"
-                                                        className="absolute inset-0 rounded-2xl border border-nothing-accent/30 shadow-[0_0_15px_rgba(163,176,135,0.3)]"
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
-                                                        transition={{ duration: 0.2 }}
-                                                    />
-                                                )}
-                                            </AnimatePresence>
-                                        </button>
+const Dock = React.forwardRef<HTMLDivElement, DockProps>(
+    ({ items, className }, ref) => {
+        return (
+            <div ref={ref} className={cn("flex items-center justify-center", className)}>
+                <motion.div
+                    initial="initial"
+                    animate="animate"
+                    variants={floatingAnimation}
+                    className={cn(
+                        "flex items-center gap-1 p-2 rounded-full",
+                        "backdrop-blur-xl border shadow-2xl",
+                        "bg-nothing-base/40 border-white/10 ring-1 ring-white/5",
+                        "hover:shadow-[0_0_20px_rgba(0,0,0,0.3)] transition-shadow duration-300"
+                    )}
+                >
+                    {items.map((item) => (
+                        <DockIconButton key={item.label} {...item} />
+                    ))}
+                </motion.div>
+            </div>
+        )
+    }
+)
+Dock.displayName = "Dock"
 
-                                        {/* Active indicator */}
-                                        {isActive && (
-                                            <motion.div
-                                                layoutId="dot"
-                                                className={cn(
-                                                    "absolute w-1.5 h-1.5 rounded-full bg-nothing-accent",
-                                                    isVertical ? "-right-2 top-1/2 -translate-y-1/2" : "-bottom-2 left-1/2 -translate-x-1/2"
-                                                )}
-                                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                            />
-                                        )}
-                                    </motion.div>
-                                </TooltipTrigger>
-                                <AnimatePresence>
-                                    {isHovered && (
-                                        <motion.div
-                                            initial={{ opacity: 0, x: isVertical ? -10 : 0, y: isVertical ? 0 : 5 }}
-                                            animate={{ opacity: 1, x: 0, y: 0 }}
-                                            exit={{ opacity: 0, x: isVertical ? -10 : 0, y: isVertical ? 0 : 5 }}
-                                        >
-                                            <TooltipContent
-                                                side={isVertical ? "right" : "top"}
-                                                className="bg-nothing-surface border-nothing-dark/10 text-nothing-dark"
-                                            >
-                                                {item.label}
-                                            </TooltipContent>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </Tooltip>
-                        );
-                    })}
-                </TooltipProvider>
-            </motion.div>
-        </div>
-    );
-};
+export { Dock }

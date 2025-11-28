@@ -38,7 +38,7 @@ export const LoginPage: React.FC = () => {
             {/* Background Decoration */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-nothing-accent/5 rounded-full blur-3xl pointer-events-none"></div>
 
-            <div className="max-w-md w-full backdrop-blur-xl bg-white/80 rounded-3xl p-8 shadow-2xl border border-nothing-dark/5 relative z-10">
+            <div className="max-w-md w-full backdrop-blur-xl bg-nothing-surface/80 rounded-3xl p-8 shadow-2xl border border-nothing-dark/5 relative z-10">
                 <div className="text-center mb-8">
                     <div className="w-12 h-12 bg-nothing-dark text-nothing-base rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                         {isSignUp ? <UserPlus size={20} /> : <LogIn size={20} />}
@@ -65,7 +65,7 @@ export const LoginPage: React.FC = () => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3.5 rounded-xl bg-nothing-dark/5 border border-transparent focus:bg-white focus:border-nothing-dark/10 focus:ring-4 focus:ring-nothing-dark/5 outline-none transition-all font-mono text-sm text-nothing-dark placeholder:text-nothing-dark/20"
+                            className="w-full px-4 py-3.5 rounded-xl bg-nothing-dark/5 border border-transparent focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:ring-4 focus:ring-nothing-dark/5 outline-none transition-all font-mono text-sm text-nothing-dark placeholder:text-nothing-dark/20"
                             placeholder="trader@example.com"
                             required
                         />
@@ -77,7 +77,7 @@ export const LoginPage: React.FC = () => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3.5 rounded-xl bg-nothing-dark/5 border border-transparent focus:bg-white focus:border-nothing-dark/10 focus:ring-4 focus:ring-nothing-dark/5 outline-none transition-all font-mono text-sm text-nothing-dark placeholder:text-nothing-dark/20"
+                            className="w-full px-4 py-3.5 rounded-xl bg-nothing-dark/5 border border-transparent focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:ring-4 focus:ring-nothing-dark/5 outline-none transition-all font-mono text-sm text-nothing-dark placeholder:text-nothing-dark/20"
                             placeholder="••••••••"
                             required
                         />

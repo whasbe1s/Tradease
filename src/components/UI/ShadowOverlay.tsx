@@ -114,7 +114,8 @@ export function ShadowOverlay({
                 style={{
                     position: "absolute",
                     inset: -displacementScale,
-                    filter: animationEnabled ? `url(#${id}) blur(4px)` : "none"
+                    filter: animationEnabled ? `url(#${id}) blur(4px)` : "none",
+                    willChange: "transform"
                 }}
             >
                 {animationEnabled && (
@@ -123,7 +124,7 @@ export function ShadowOverlay({
                             <filter id={id}>
                                 <feTurbulence
                                     result="undulation"
-                                    numOctaves="4"
+                                    numOctaves="2"
                                     baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`}
                                     seed="0"
                                     type="turbulence"

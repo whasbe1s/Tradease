@@ -10,6 +10,7 @@ export interface TerminalItem {
   tags: string[];
   created_at: string;
   favorite: boolean;
+  user_id?: string;
   // New fields
   type: ItemType;
   pair?: string;

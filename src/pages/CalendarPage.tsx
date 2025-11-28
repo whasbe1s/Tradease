@@ -5,6 +5,8 @@ import { getWeekEvents } from '../services/economicCalendar';
 import { EconomicEvent, EconomicImpact, Currency } from '../types';
 import { useToast } from '../hooks/useToast';
 import { useEconomicCalendar } from '../hooks/useEconomicCalendar';
+import { Badge } from '../components/UI/Badge';
+import { Dropdown } from '../components/UI/Dropdown';
 
 export const CalendarPage: React.FC = () => {
     const navigate = useNavigate();
@@ -13,6 +15,23 @@ export const CalendarPage: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedImpact, setSelectedImpact] = useState<EconomicImpact | 'all'>('all');
     const [selectedCurrency, setSelectedCurrency] = useState<Currency | 'all'>('all');
+
+    const impactOptions = [
+        { value: 'all', label: 'All Impact Levels' },
+        { value: 'high', label: 'High Impact' },
+        { value: 'medium', label: 'Medium Impact' },
+        { value: 'low', label: 'Low Impact' },
+    ];
+
+    const currencyOptions = [
+        { value: 'all', label: 'All Currencies' },
+        { value: 'USD', label: 'USD' },
+        { value: 'EUR', label: 'EUR' },
+        { value: 'GBP', label: 'GBP' },
+        { value: 'JPY', label: 'JPY' },
+        { value: 'AUD', label: 'AUD' },
+        { value: 'CAD', label: 'CAD' },
+    ];
 
     // Filter events
     const filteredEvents = events.filter(event => {
@@ -35,16 +54,10 @@ export const CalendarPage: React.FC = () => {
 
     const getImpactColor = (impact: string) => {
         switch (impact.toLowerCase()) {
-            case 'high':
-                return 'bg-nothing-accent/10 text-nothing-accent border-nothing-accent/20';
-            case 'medium':
-                return 'bg-nothing-dark/10 text-nothing-dark border-nothing-dark/20';
-            case 'low':
-                return 'bg-transparent text-nothing-dark/40 border-nothing-dark/10';
-            case 'holiday':
-                return 'bg-nothing-dark/5 text-nothing-dark/30 border-nothing-dark/5';
-            default:
-                return 'bg-transparent text-nothing-dark/40 border-nothing-dark/10';
+            case 'high': return 'accent';
+            case 'medium': return 'warning';
+            case 'low': return 'neutral';
+            default: return 'neutral';
         }
     };
 
@@ -89,8 +102,6 @@ export const CalendarPage: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Scan Button */}
-                {/* Refresh Button */}
                 <button
                     onClick={() => refresh()}
                     disabled={loading}
@@ -101,59 +112,52 @@ export const CalendarPage: React.FC = () => {
                 </button>
             </div>
 
-            {/* Filters & Search */}
+            {/* Filters & Search - Bento Style */}
             <div
-                className="backdrop-blur-md border border-nothing-dark/10 rounded-3xl p-6 shadow-xl mb-6"
-                style={{ backgroundColor: `rgba(67, 86, 99, var(--bento - opacity))` }}
+                className="backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl mb-8"
             >
                 <div className="flex flex-col md:flex-row gap-4">
                     {/* Search */}
                     <div className="relative flex-1">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-nothing-dark/40 pointer-events-none" />
                         <input
+                            id="calendar-search"
+                            name="calendar-search"
                             type="text"
+                            autoComplete="off"
+                            data-lpignore="true"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search events..."
-                            className="w-full pl-9 pr-3 py-2 bg-transparent border border-nothing-dark/10 hover:border-nothing-dark/20 focus:border-nothing-dark/30 rounded-lg text-xs font-mono text-nothing-dark placeholder:text-nothing-dark/30 focus:outline-none transition-colors"
+                            className="w-full pl-9 pr-3 py-2 bg-nothing-dark/5 border border-transparent hover:border-nothing-dark/10 focus:border-nothing-dark/20 rounded-xl text-xs font-mono text-nothing-dark placeholder:text-nothing-dark/30 focus:outline-none transition-all"
                         />
                     </div>
 
                     {/* Impact Filter */}
-                    <select
-                        value={selectedImpact}
-                        onChange={(e) => setSelectedImpact(e.target.value as EconomicImpact | 'all')}
-                        className="px-3 py-2 bg-transparent border border-nothing-dark/10 hover:border-nothing-dark/20 focus:border-nothing-dark/30 rounded-lg text-xs font-mono text-nothing-dark focus:outline-none transition-colors cursor-pointer"
-                    >
-                        <option value="all">All Impact Levels</option>
-                        <option value="high">High Impact</option>
-                        <option value="medium">Medium Impact</option>
-                        <option value="low">Low Impact</option>
-                    </select>
+                    <div className="w-full md:w-48">
+                        <Dropdown
+                            value={selectedImpact}
+                            onChange={(val) => setSelectedImpact(val as EconomicImpact | 'all')}
+                            options={impactOptions}
+                        />
+                    </div>
 
                     {/* Currency Filter */}
-                    <select
-                        value={selectedCurrency}
-                        onChange={(e) => setSelectedCurrency(e.target.value as Currency | 'all')}
-                        className="px-3 py-2 bg-transparent border border-nothing-dark/10 hover:border-nothing-dark/20 focus:border-nothing-dark/30 rounded-lg text-xs font-mono text-nothing-dark focus:outline-none transition-colors cursor-pointer"
-                    >
-                        <option value="all">All Currencies</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
-                        <option value="JPY">JPY</option>
-                        <option value="AUD">AUD</option>
-                        <option value="CAD">CAD</option>
-                    </select>
+                    <div className="w-full md:w-48">
+                        <Dropdown
+                            value={selectedCurrency}
+                            onChange={(val) => setSelectedCurrency(val as Currency | 'all')}
+                            options={currencyOptions}
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* Events by Date */}
-            <div className="space-y-6">
+            <div className="space-y-8">
                 {Object.keys(groupedEvents).length === 0 ? (
                     <div
-                        className="backdrop-blur-md border border-nothing-dark/10 rounded-3xl p-12 shadow-xl text-center flex flex-col items-center justify-center"
-                        style={{ backgroundColor: `rgba(67, 86, 99, var(--bento - opacity))` }}
+                        className="backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-12 shadow-2xl text-center flex flex-col items-center justify-center min-h-[300px]"
                     >
                         {loading ? (
                             <>
@@ -163,62 +167,77 @@ export const CalendarPage: React.FC = () => {
                         ) : (
                             <>
                                 <ScanLine size={48} className="text-nothing-dark/20 mb-4" />
-                                <p className="text-nothing-dark/40 font-mono text-sm">No events loaded</p>
+                                <p className="text-nothing-dark/40 font-mono text-sm">No events found matching your filters</p>
                                 <button
-                                    onClick={() => refresh()}
-                                    className="mt-4 text-xs text-nothing-accent hover:underline flex items-center gap-2"
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedImpact('all');
+                                        setSelectedCurrency('all');
+                                    }}
+                                    className="mt-4 text-xs text-nothing-accent hover:underline"
                                 >
-                                    <RefreshCw size={12} />
-                                    Refresh Data
+                                    Clear Filters
                                 </button>
                             </>
                         )}
                     </div>
                 ) : (
                     Object.entries(groupedEvents).map(([date, dateEvents]) => (
-                        <div key={date}>
+                        <div key={date} className="animate-fade-in-up">
                             {/* Date Header */}
-                            <div className="mb-3 flex items-center gap-3">
-                                <h2 className="text-sm font-bold font-mono text-nothing-dark">{formatDate(date)}</h2>
-                                <div className="flex-1 h-px bg-nothing-dark/10"></div>
-                                <span className="text-xs font-mono text-nothing-dark/40">{dateEvents.length} events</span>
+                            <div className="mb-4 flex items-center gap-4">
+                                <div className="px-3 py-1 rounded-full bg-nothing-dark/10 text-nothing-dark font-mono text-xs font-bold uppercase tracking-wider">
+                                    {formatDate(date)}
+                                </div>
+                                <div className="h-px flex-1 bg-gradient-to-r from-nothing-dark/10 to-transparent"></div>
                             </div>
 
-                            {/* Events */}
-                            <div
-                                className="backdrop-blur-md border border-nothing-dark/10 rounded-3xl p-6 shadow-xl space-y-3"
-                                style={{ backgroundColor: `rgba(67, 86, 99, var(--bento - opacity))` }}
-                            >
+                            {/* Events Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {dateEvents.map(event => (
                                     <div
                                         key={event.id}
-                                        className="p-4 rounded-lg bg-white/40 border border-nothing-dark/5 hover:border-nothing-dark/20 transition-all"
+                                        className="group backdrop-blur-xl bg-nothing-base/40 border border-white/5 hover:border-nothing-accent/20 ring-1 ring-white/5 rounded-2xl p-5 shadow-lg transition-all hover:shadow-nothing-accent/5 hover:-translate-y-1"
                                     >
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <span className="font-mono font-bold text-lg">{event.time}</span>
-                                                    <span className="text-xs font-bold bg-nothing-dark/10 px-2 py-1 rounded text-nothing-dark/60">
-                                                        {event.currency}
-                                                    </span>
-                                                    <div className={`
-px - 2 py - 1 rounded - full text - [10px] font - bold uppercase tracking - wider border
-                                                        ${getImpactColor(event.impact)}
-`}>
-                                                        {event.impact}
-                                                    </div>
-                                                </div>
-                                                <h3 className="font-medium text-sm text-nothing-dark/90 mb-2">{event.event}</h3>
-                                                <div className="flex gap-6 text-xs font-mono">
-                                                    <div>
-                                                        <span className="text-nothing-dark/40">Forecast:</span>
-                                                        <span className="text-nothing-dark ml-1">{event.forecast}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-nothing-dark/40">Previous:</span>
-                                                        <span className="text-nothing-dark ml-1">{event.previous}</span>
-                                                    </div>
-                                                </div>
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="soft" color="neutral" className="font-mono">
+                                                    {event.time}
+                                                </Badge>
+                                                <Badge variant="outline" color="neutral">
+                                                    {event.currency}
+                                                </Badge>
+                                            </div>
+                                            <Badge
+                                                variant={event.impact === 'high' ? 'default' : 'soft'}
+                                                color={getImpactColor(event.impact) as any}
+                                            >
+                                                {event.impact}
+                                            </Badge>
+                                        </div>
+
+                                        <h3 className="font-medium text-sm text-nothing-dark/90 mb-4 line-clamp-2 min-h-[40px]">
+                                            {event.event}
+                                        </h3>
+
+                                        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] uppercase tracking-wider text-nothing-dark/40 mb-1">Actual</span>
+                                                <span className={`font-mono text-xs font-bold ${event.actual ? 'text-nothing-dark' : 'text-nothing-dark/20'}`}>
+                                                    {event.actual || '---'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col border-l border-white/5 pl-3">
+                                                <span className="text-[10px] uppercase tracking-wider text-nothing-dark/40 mb-1">Forecast</span>
+                                                <span className="font-mono text-xs text-nothing-dark/80">
+                                                    {event.forecast || '---'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col border-l border-white/5 pl-3">
+                                                <span className="text-[10px] uppercase tracking-wider text-nothing-dark/40 mb-1">Previous</span>
+                                                <span className="font-mono text-xs text-nothing-dark/60">
+                                                    {event.previous || '---'}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

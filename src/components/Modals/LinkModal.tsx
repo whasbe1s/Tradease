@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, TrendingUp, TrendingDown, Image as ImageIcon, Upload, Trash2 } from 'lucide-react';
 import { LinkItem, TradeDirection, TradeOutcome } from '../../types';
+import { Dropdown } from '../UI/Dropdown';
+import { TagInput } from '../UI/TagInput';
 
 interface LinkModalProps {
     isOpen: boolean;
@@ -17,6 +19,7 @@ export const LinkModal: React.FC<LinkModalProps> = ({ isOpen, onClose, onUpdate,
     const [exitPrice, setExitPrice] = useState('');
     const [pnl, setPnl] = useState('');
     const [notes, setNotes] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
     const [image, setImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,6 +32,7 @@ export const LinkModal: React.FC<LinkModalProps> = ({ isOpen, onClose, onUpdate,
             setExitPrice(linkData.exit_price?.toString() || '');
             setPnl(linkData.pnl?.toString() || '');
             setNotes(linkData.notes || linkData.description || '');
+            setTags(linkData.tags || []);
             setImage(linkData.screenshot_url || null);
         }
     }, [isOpen, linkData]);
@@ -74,6 +78,7 @@ export const LinkModal: React.FC<LinkModalProps> = ({ isOpen, onClose, onUpdate,
             pnl: pnl ? parseFloat(pnl) : undefined,
             notes,
             description: notes, // Keep description in sync
+            tags,
             screenshot_url: image || undefined
         });
         onClose();
@@ -153,9 +158,13 @@ export const LinkModal: React.FC<LinkModalProps> = ({ isOpen, onClose, onUpdate,
                         {/* Pair & Direction */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="group">
-                                <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Pair</label>
+                                <label htmlFor="trade-pair" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Pair</label>
                                 <input
+                                    id="trade-pair"
+                                    name="trade-pair"
                                     type="text"
+                                    autoComplete="off"
+                                    data-lpignore="true"
                                     value={pair}
                                     onChange={(e) => setPair(e.target.value)}
                                     className="w-full bg-nothing-dark/5 border border-transparent rounded-xl px-4 py-3 font-mono text-lg font-bold uppercase focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:outline-none transition-all"
@@ -188,20 +197,28 @@ export const LinkModal: React.FC<LinkModalProps> = ({ isOpen, onClose, onUpdate,
                         {/* Price Levels */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="group">
-                                <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Entry Price</label>
+                                <label htmlFor="trade-entry" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Entry Price</label>
                                 <input
+                                    id="trade-entry"
+                                    name="trade-entry"
                                     type="number"
                                     step="any"
+                                    autoComplete="off"
+                                    data-lpignore="true"
                                     value={entryPrice}
                                     onChange={(e) => setEntryPrice(e.target.value)}
                                     className="w-full bg-nothing-dark/5 border border-transparent rounded-xl px-4 py-3 font-mono text-sm focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:outline-none transition-all"
                                 />
                             </div>
                             <div className="group">
-                                <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Exit Price</label>
+                                <label htmlFor="trade-exit" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Exit Price</label>
                                 <input
+                                    id="trade-exit"
+                                    name="trade-exit"
                                     type="number"
                                     step="any"
+                                    autoComplete="off"
+                                    data-lpignore="true"
                                     value={exitPrice}
                                     onChange={(e) => setExitPrice(e.target.value)}
                                     className="w-full bg-nothing-dark/5 border border-transparent rounded-xl px-4 py-3 font-mono text-sm focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:outline-none transition-all"
@@ -213,22 +230,27 @@ export const LinkModal: React.FC<LinkModalProps> = ({ isOpen, onClose, onUpdate,
                         <div className="grid grid-cols-2 gap-4">
                             <div className="group">
                                 <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Outcome</label>
-                                <select
+                                <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Outcome</label>
+                                <Dropdown
                                     value={outcome}
-                                    onChange={(e) => setOutcome(e.target.value as TradeOutcome)}
-                                    className="w-full bg-nothing-dark/5 border border-transparent rounded-xl px-4 py-3 font-mono text-sm focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:outline-none transition-all appearance-none"
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="win">Win</option>
-                                    <option value="loss">Loss</option>
-                                    <option value="be">Break Even</option>
-                                </select>
+                                    onChange={(val) => setOutcome(val as TradeOutcome)}
+                                    options={[
+                                        { value: 'pending', label: 'Pending' },
+                                        { value: 'win', label: 'Win', color: 'text-green-500' },
+                                        { value: 'loss', label: 'Loss', color: 'text-red-500' },
+                                        { value: 'be', label: 'Break Even' }
+                                    ]}
+                                />
                             </div>
                             <div className="group">
-                                <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Net PnL</label>
+                                <label htmlFor="trade-pnl" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Net PnL</label>
                                 <input
+                                    id="trade-pnl"
+                                    name="trade-pnl"
                                     type="number"
                                     step="any"
+                                    autoComplete="off"
+                                    data-lpignore="true"
                                     value={pnl}
                                     onChange={(e) => setPnl(e.target.value)}
                                     className={`w-full bg-nothing-dark/5 border border-transparent rounded-xl px-4 py-3 font-mono text-sm font-bold focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:outline-none transition-all ${parseFloat(pnl) > 0 ? 'text-green-600' : parseFloat(pnl) < 0 ? 'text-red-600' : ''}`}
@@ -238,13 +260,27 @@ export const LinkModal: React.FC<LinkModalProps> = ({ isOpen, onClose, onUpdate,
 
                         {/* Notes */}
                         <div className="group">
-                            <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Notes</label>
+                            <label htmlFor="trade-notes" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Notes</label>
                             <textarea
+                                id="trade-notes"
+                                name="trade-notes"
+                                autoComplete="off"
+                                data-lpignore="true"
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 className="w-full bg-nothing-dark/5 border border-transparent rounded-xl p-4 font-mono text-sm focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:outline-none transition-all resize-none"
                                 rows={4}
                                 placeholder="Trade analysis..."
+                            />
+                        </div>
+
+                        {/* Tags */}
+                        <div className="group">
+                            <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Tags</label>
+                            <TagInput
+                                tags={tags}
+                                onAddTag={(tag) => setTags([...tags, tag])}
+                                onRemoveTag={(tag) => setTags(tags.filter(t => t !== tag))}
                             />
                         </div>
 

@@ -79,8 +79,7 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
     return (
         <div className="w-full max-w-4xl mx-auto h-[calc(100vh-140px)] min-h-[600px]">
             <div
-                className="w-full h-full backdrop-blur-md border border-nothing-dark/5 rounded-3xl p-6 shadow-xl flex flex-col relative overflow-hidden"
-                style={{ backgroundColor: `rgba(67, 86, 99, var(--bento-opacity))` }}
+                className="w-full h-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col relative overflow-hidden"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -97,9 +96,8 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
                     {/* Mode Switcher */}
                     <div className="flex bg-nothing-dark/5 p-1 rounded-full">
                         <button
-                            onClick={() => setMode('chart')}
                             className={`px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-2 ${mode === 'chart'
-                                ? 'bg-white text-nothing-dark shadow-sm'
+                                ? 'bg-nothing-accent text-nothing-base shadow-sm font-bold'
                                 : 'text-nothing-dark/40 hover:text-nothing-dark/60'
                                 }`}
                         >
@@ -108,7 +106,7 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
                         <button
                             onClick={() => setMode('text')}
                             className={`px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-2 ${mode === 'text'
-                                ? 'bg-white text-nothing-dark shadow-sm'
+                                ? 'bg-nothing-accent text-nothing-base shadow-sm font-bold'
                                 : 'text-nothing-dark/40 hover:text-nothing-dark/60'
                                 }`}
                         >
@@ -177,7 +175,7 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
 
                     {/* Result Display */}
                     {result && (
-                        <div className="bg-white/50 backdrop-blur border border-nothing-dark/10 rounded-2xl p-6 animate-fade-in shadow-sm">
+                        <div className="bg-nothing-surface/80 backdrop-blur border border-nothing-dark/10 rounded-2xl p-6 animate-fade-in shadow-sm">
                             <div className="flex items-center gap-2 mb-4 text-nothing-accent">
                                 <Sparkles size={16} />
                                 <span className="text-xs font-mono uppercase tracking-widest font-bold">AI Insight</span>

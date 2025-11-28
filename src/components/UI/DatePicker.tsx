@@ -213,6 +213,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                                 <Clock size={12} className="text-nothing-dark/40" />
                                 <input
                                     type="time"
+                                    autoComplete="off"
+                                    data-lpignore="true"
                                     value={time}
                                     onChange={handleTimeChange}
                                     className="bg-transparent font-mono text-xs text-nothing-dark focus:outline-none w-full color-scheme-dark"

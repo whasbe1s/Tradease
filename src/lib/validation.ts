@@ -10,7 +10,7 @@ export const TradeSchema = z.object({
     pair: z.string()
         .min(VALIDATION_CONFIG.PAIR_MIN_LENGTH, `Pair must be at least ${VALIDATION_CONFIG.PAIR_MIN_LENGTH} characters`)
         .max(VALIDATION_CONFIG.PAIR_MAX_LENGTH, `Pair must be at most ${VALIDATION_CONFIG.PAIR_MAX_LENGTH} characters`)
-        .regex(/^[A-Z]{6,10}$/, 'Pair must be uppercase letters only')
+        .regex(/^[a-zA-Z]{6,10}$/, 'Pair must be 6-10 letters')
         .transform(val => val.toUpperCase()),
 
     direction: z.enum(['long', 'short']),

@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { GoogleGenAI } from 'npm:@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -18,7 +18,7 @@ serve(async (req) => {
             throw new Error('GEMINI_API_KEY is not set');
         }
 
-        const ai = new GoogleGenAI({ apiKey });
+        const ai = new GoogleGenerativeAI(apiKey);
 
         // Basic auth check - in a real app, we'd verify the JWT from the Authorization header
         // const authHeader = req.headers.get('Authorization');

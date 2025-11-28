@@ -1,5 +1,6 @@
 import React from 'react';
-import { Filter, ArrowUpDown, CheckSquare, Square } from 'lucide-react';
+import { CheckSquare, Square } from 'lucide-react';
+import { Dropdown } from '../UI/Dropdown';
 
 interface ControlsProps {
     filteredCount: number;
@@ -37,24 +38,18 @@ export const Controls: React.FC<ControlsProps> = ({
 
 
                 {/* Sort Dropdown Container */}
-                <div className="relative border-r border-nothing-dark/10 bg-nothing-base hover:bg-nothing-surface transition-colors flex items-center">
-                    <div className="absolute left-3 pointer-events-none text-nothing-dark">
-                        <Filter size={12} />
-                    </div>
-                    <select
+                <div className="w-48 border-r border-nothing-dark/10 bg-nothing-base">
+                    <Dropdown
                         value={sortMode}
-                        onChange={(e) => setSortMode(e.target.value as any)}
-                        className="appearance-none bg-transparent pl-9 pr-8 py-2 text-xs font-mono uppercase cursor-pointer focus:outline-none text-nothing-dark w-full h-full rounded-none"
-                    >
-                        <option value="newest">Newest</option>
-                        <option value="oldest">Oldest</option>
-                        <option value="pnl-high">Highest PnL</option>
-                        <option value="pnl-low">Lowest PnL</option>
-                        <option value="pair-az">Pair A-Z</option>
-                    </select>
-                    <div className="absolute right-2 pointer-events-none text-nothing-dark/50">
-                        <ArrowUpDown size={10} />
-                    </div>
+                        onChange={(val) => setSortMode(val as any)}
+                        options={[
+                            { value: 'newest', label: 'Newest' },
+                            { value: 'oldest', label: 'Oldest' },
+                            { value: 'pnl-high', label: 'Highest PnL' },
+                            { value: 'pnl-low', label: 'Lowest PnL' },
+                            { value: 'pair-az', label: 'Pair A-Z' }
+                        ]}
+                    />
                 </div>
 
                 {/* Select All */}

@@ -23,8 +23,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <div className="fixed inset-0 z-0">
                 <ShadowOverlay
                     className="absolute inset-0"
-                    animation={{ scale: 100, speed: 50 }}
-                    noise={{ opacity: 0.2, scale: 1 }}
+                    animation={{ scale: 100, speed: 40 }}
+                    noise={{ opacity: 0.2, scale: 1.5 }}
                 />
             </div>
 
@@ -33,7 +33,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     onOpenTradeModal={onOpenTradeModal}
                 />
 
-                <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 flex-grow w-full">
+                <main className="max-w-7xl mx-auto px-4 md:px-6 pt-26 flex-grow w-full">
                     <Outlet />
                 </main>
 

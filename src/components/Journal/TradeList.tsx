@@ -142,7 +142,8 @@ export const TradeList: React.FC<TradeListProps> = ({
 
     return (
         <>
-            <div className="w-full min-w-[800px]">
+            {/* Desktop View (Grid) */}
+            <div className="hidden md:block w-full min-w-[800px]">
                 {/* Header Row */}
                 <div className="grid grid-cols-12 gap-4 px-4 py-2 border-b border-nothing-dark/10 text-[9px] uppercase tracking-[0.2em] text-nothing-dark/40 font-mono select-none sticky top-0 bg-nothing-base/95 backdrop-blur-md z-20">
                     <div className="col-span-1 flex items-center justify-center">
@@ -269,8 +270,8 @@ export const TradeList: React.FC<TradeListProps> = ({
                                                     <div
                                                         key={i}
                                                         className={`w-1 h-1 rounded-full ${isWin ? (i < 3 ? 'bg-nothing-dark' : 'bg-nothing-dark/20') :
-                                                                isLoss ? (i < 1 ? 'bg-nothing-accent' : 'bg-nothing-accent/20') :
-                                                                    'bg-nothing-dark/10'
+                                                            isLoss ? (i < 1 ? 'bg-nothing-accent' : 'bg-nothing-accent/20') :
+                                                                'bg-nothing-dark/10'
                                                             }`}
                                                     />
                                                 ))}
@@ -307,6 +308,121 @@ export const TradeList: React.FC<TradeListProps> = ({
                         </div>
                     ))}
                 </div>
+            </div>
+
+            {/* Mobile View (Cards) */}
+            <div className="block md:hidden w-full pb-20">
+                {dateGroups.map(group => (
+                    <div key={group.label} className="mb-6">
+                        {/* Group Header */}
+                        <div className="px-4 py-2 flex items-center justify-between sticky top-0 bg-nothing-base/95 backdrop-blur-md z-20 border-b border-nothing-dark/5 mb-2">
+                            <span className="text-[10px] font-mono font-bold text-nothing-dark tracking-wider">{group.label}</span>
+                            <span className={`text-[10px] font-mono font-bold ${group.totalPnL > 0 ? 'text-nothing-dark' : group.totalPnL < 0 ? 'text-nothing-accent' : 'text-nothing-dark/40'}`}>
+                                {group.totalPnL > 0 ? '+' : ''}${group.totalPnL.toFixed(2)}
+                            </span>
+                        </div>
+
+                        {/* Cards */}
+                        <div className="space-y-3 px-2">
+                            {group.trades.map(trade => {
+                                const isWin = trade.outcome === 'win';
+                                const isLoss = trade.outcome === 'loss';
+                                const isLong = trade.direction === 'long';
+                                const pnl = trade.pnl || 0;
+                                const isExpanded = expandedRows.has(trade.id);
+
+                                return (
+                                    <div
+                                        key={trade.id}
+                                        onClick={() => toggleRow(trade.id)}
+                                        onContextMenu={(e) => handleContextMenu(e, trade)}
+                                        className={`
+                                            bg-nothing-dark/5 rounded-2xl p-4 border border-nothing-dark/5 active:scale-[0.98] transition-all
+                                            ${isExpanded ? 'bg-nothing-dark/10 border-nothing-dark/10' : ''}
+                                        `}
+                                    >
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-nothing-dark font-mono text-lg">
+                                                    {trade.pair || trade.title}
+                                                </span>
+                                                <span className={`
+                                                    text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm border
+                                                    ${isLong
+                                                        ? 'text-nothing-dark border-nothing-dark/20 bg-nothing-dark/5'
+                                                        : 'text-nothing-accent border-nothing-accent/20 bg-nothing-accent/5'}
+                                                `}>
+                                                    {trade.direction === 'long' ? 'LONG' : 'SHRT'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className={`font-mono font-bold text-lg ${pnl > 0 ? 'text-nothing-dark' : pnl < 0 ? 'text-nothing-accent' : 'text-nothing-dark/40'}`}>
+                                                    {pnl > 0 ? '+' : ''}${pnl.toFixed(2)}
+                                                </span>
+                                                <span className="text-[10px] font-mono text-nothing-dark/40">
+                                                    {new Date(trade.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between items-end">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2 text-[10px] font-mono text-nothing-dark/60">
+                                                    <span>Entry: {trade.entry_price?.toFixed(5) || '---'}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-[10px] font-mono text-nothing-dark/60">
+                                                    <span>Exit: {trade.exit_price?.toFixed(5) || '---'}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Outcome Dots */}
+                                            <div className="flex gap-1">
+                                                {[...Array(3)].map((_, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`w-1.5 h-1.5 rounded-full ${isWin ? (i < 3 ? 'bg-nothing-dark' : 'bg-nothing-dark/20') :
+                                                            isLoss ? (i < 1 ? 'bg-nothing-accent' : 'bg-nothing-accent/20') :
+                                                                'bg-nothing-dark/10'
+                                                            }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Expanded Details Mobile */}
+                                        <AnimatePresence>
+                                            {isExpanded && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    className="overflow-hidden mt-4 pt-4 border-t border-nothing-dark/10"
+                                                >
+                                                    <TradeDetails trade={trade} />
+                                                    <div className="flex justify-end gap-2 mt-4">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); onEdit(trade); }}
+                                                            className="px-4 py-2 bg-nothing-dark/10 rounded-lg text-xs font-mono font-bold text-nothing-dark"
+                                                        >
+                                                            EDIT
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); onDelete(trade.id); }}
+                                                            className="px-4 py-2 bg-nothing-accent/10 rounded-lg text-xs font-mono font-bold text-nothing-accent"
+                                                        >
+                                                            DELETE
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Context Menu */}

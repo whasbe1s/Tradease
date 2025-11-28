@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, TrendingUp, TrendingDown, Tag, Sparkles, Wand2, Loader2 } from 'lucide-react';
+import { Save, TrendingUp, TrendingDown, Tag } from 'lucide-react';
 import { Dropdown } from '../UI/Dropdown';
 import { DatePicker } from '../UI/DatePicker';
 import { TerminalItem, TradeDirection, TradeOutcome } from '../../types';
@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { TradeSchema } from '../../lib/validation';
 import { useToast } from '../../hooks/useToast';
 import { z } from 'zod';
-import { parseTradeLog } from '../../services/geminiService';
+
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTradeCalculations } from '../../hooks/useTradeCalculations';
@@ -22,9 +22,7 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
     const navigate = useNavigate();
     const { addToast } = useToast();
 
-    // Quick Log State
-    const [quickLogText, setQuickLogText] = useState('');
-    const [isParsing, setIsParsing] = useState(false);
+
 
     // Initialize dates
     const initialEntryDate = (() => {
@@ -64,31 +62,7 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
         }
     }, [pnl, setValue]);
 
-    const handleQuickLog = async () => {
-        if (!quickLogText.trim()) return;
 
-        setIsParsing(true);
-        try {
-            const data = await parseTradeLog(quickLogText);
-
-            if (data.pair) setValue('pair', data.pair);
-            if (data.direction) setValue('direction', data.direction.toLowerCase() as TradeDirection);
-            if (data.entry_price) setValue('entry_price', data.entry_price);
-            if (data.exit_price) setValue('exit_price', data.exit_price);
-            if (data.stop_loss) setValue('stop_loss', data.stop_loss);
-            if (data.take_profit) setValue('take_profit', data.take_profit);
-            if (data.quantity) setValue('quantity', data.quantity);
-            if (data.outcome) setValue('outcome', data.outcome.toLowerCase() as TradeOutcome);
-            if (data.notes) setValue('notes', data.notes);
-
-            addToast('Trade data auto-filled!', 'success');
-        } catch (error) {
-            console.error("Quick Log Error:", error);
-            addToast('Failed to parse trade log.', 'error');
-        } finally {
-            setIsParsing(false);
-        }
-    };
 
     const onSubmit = (data: TradeFormData) => {
         const newTrade: TerminalItem = {
@@ -118,8 +92,7 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
     return (
         <div className="w-full max-w-4xl mx-auto">
             <div
-                className="w-full backdrop-blur-md border border-nothing-dark/10 rounded-3xl shadow-xl relative"
-                style={{ backgroundColor: `rgba(67, 86, 99, var(--bento-opacity))` }}
+                className="w-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl shadow-2xl relative"
             >
                 {/* Background & Decor (Overflow Hidden Here) */}
                 <div className="absolute inset-0 overflow-hidden rounded-3xl">
@@ -129,9 +102,9 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                 </div>
 
                 {/* Content (No Overflow Hidden) */}
-                <div className="relative z-10 p-8">
+                <div className="relative z-10 p-4 md:p-8">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-6 md:mb-8">
                         <div>
                             <h2 className="text-2xl font-bold text-nothing-dark tracking-tight">Log Trade</h2>
                             <p className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mt-1">New Journal Entry</p>
@@ -141,36 +114,12 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                         </div>
                     </div>
 
-                    {/* Quick Log Section */}
-                    <div className="mb-8 p-1 rounded-2xl bg-gradient-to-r from-nothing-accent/20 to-nothing-dark/10">
-                        <div className="bg-nothing-base/90 rounded-xl p-4 backdrop-blur-sm">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Sparkles size={14} className="text-nothing-accent" />
-                                <span className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/60">Quick Log AI</span>
-                            </div>
-                            <div className="relative">
-                                <textarea
-                                    value={quickLogText}
-                                    onChange={(e) => setQuickLogText(e.target.value)}
-                                    placeholder="e.g. Long BTC at 50k, SL 49k, TP 55k, risk 1%..."
-                                    className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl p-3 pr-12 font-mono text-sm text-nothing-dark placeholder:text-nothing-dark/30 focus:bg-white focus:border-nothing-accent focus:outline-none transition-all resize-none h-20"
-                                />
-                                <button
-                                    onClick={handleQuickLog}
-                                    disabled={isParsing || !quickLogText.trim()}
-                                    className="absolute bottom-3 right-3 p-2 rounded-lg bg-nothing-accent text-white hover:bg-nothing-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
-                                    title="Auto-fill form"
-                                >
-                                    {isParsing ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-8" autoComplete="off">
 
                         {/* Main Grid Layout */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
 
                             {/* Left Column: Core Details */}
                             <div className="lg:col-span-2 space-y-8">
@@ -180,11 +129,14 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                     <div className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/30 border-b border-nothing-dark/10 pb-2">Strategy</div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="group">
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Pair</label>
+                                            <label htmlFor="trade-pair" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Pair</label>
                                             <input
+                                                id="trade-pair"
                                                 {...register('pair')}
+                                                autoComplete="off"
+                                                data-lpignore="true"
                                                 placeholder="EURUSD"
-                                                className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-lg text-nothing-dark uppercase placeholder:text-nothing-dark/20 focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
+                                                className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-lg text-nothing-dark uppercase placeholder:text-nothing-dark/20 focus:bg-white focus:text-nothing-base focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
                                             />
                                         </div>
                                         <div className="flex gap-2 items-end">
@@ -225,28 +177,37 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                     <div className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/30 border-b border-nothing-dark/10 pb-2">Execution</div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="group">
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Entry</label>
+                                            <label htmlFor="trade-entry" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Entry</label>
                                             <input
+                                                id="trade-entry"
                                                 type="number"
                                                 step="any"
+                                                autoComplete="off"
+                                                data-lpignore="true"
                                                 {...register('entry_price', { valueAsNumber: true })}
-                                                className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
+                                                className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:text-nothing-base focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
                                             />
                                         </div>
                                         <div className="group">
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-trade-loss/60 mb-2">Stop Loss</label>
+                                            <label htmlFor="trade-sl" className="block text-[10px] font-mono uppercase tracking-widest text-trade-loss/60 mb-2">Stop Loss</label>
                                             <input
+                                                id="trade-sl"
                                                 type="number"
                                                 step="any"
+                                                autoComplete="off"
+                                                data-lpignore="true"
                                                 {...register('stop_loss', { valueAsNumber: true })}
                                                 className="w-full bg-trade-loss/5 border border-trade-loss/10 rounded-xl px-4 py-3 font-mono text-trade-loss focus:bg-white focus:border-trade-loss focus:ring-4 focus:ring-trade-loss/10 outline-none transition-all"
                                             />
                                         </div>
                                         <div className="group">
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-trade-win/60 mb-2">Take Profit</label>
+                                            <label htmlFor="trade-tp" className="block text-[10px] font-mono uppercase tracking-widest text-trade-win/60 mb-2">Take Profit</label>
                                             <input
+                                                id="trade-tp"
                                                 type="number"
                                                 step="any"
+                                                autoComplete="off"
+                                                data-lpignore="true"
                                                 {...register('take_profit', { valueAsNumber: true })}
                                                 className="w-full bg-trade-win/5 border border-trade-win/10 rounded-xl px-4 py-3 font-mono text-trade-win focus:bg-white focus:border-trade-win focus:ring-4 focus:ring-trade-win/10 outline-none transition-all"
                                             />
@@ -254,21 +215,27 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="group">
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Quantity</label>
+                                            <label htmlFor="trade-quantity" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Quantity</label>
                                             <input
+                                                id="trade-quantity"
                                                 type="number"
                                                 step="any"
+                                                autoComplete="off"
+                                                data-lpignore="true"
                                                 {...register('quantity', { valueAsNumber: true })}
-                                                className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
+                                                className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:text-nothing-base focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
                                             />
                                         </div>
                                         <div className="group">
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Exit Price</label>
+                                            <label htmlFor="trade-exit" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Exit Price</label>
                                             <input
+                                                id="trade-exit"
                                                 type="number"
                                                 step="any"
+                                                autoComplete="off"
+                                                data-lpignore="true"
                                                 {...register('exit_price', { valueAsNumber: true })}
-                                                className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
+                                                className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono text-nothing-dark focus:bg-white focus:text-nothing-base focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all"
                                             />
                                         </div>
                                     </div>
@@ -278,9 +245,12 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                 <div className="space-y-4">
                                     <div className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/30 border-b border-nothing-dark/10 pb-2">Notes</div>
                                     <textarea
+                                        id="trade-notes"
                                         {...register('notes')}
+                                        autoComplete="off"
+                                        data-lpignore="true"
                                         rows={4}
-                                        className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl p-4 font-mono text-sm text-nothing-dark focus:bg-white focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all resize-none"
+                                        className="w-full bg-nothing-dark/5 border border-nothing-dark/10 rounded-xl p-4 font-mono text-sm text-nothing-dark focus:bg-white focus:text-nothing-base focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all resize-none"
                                         placeholder="Trade rationale..."
                                     />
                                 </div>
@@ -312,10 +282,13 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
                                             )}
                                         />
                                         <div>
-                                            <label className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Net PnL</label>
+                                            <label htmlFor="trade-pnl" className="block text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40 mb-2">Net PnL</label>
                                             <input
+                                                id="trade-pnl"
                                                 type="number"
                                                 step="any"
+                                                autoComplete="off"
+                                                data-lpignore="true"
                                                 {...register('pnl', { valueAsNumber: true })}
                                                 placeholder="0.00"
                                                 className={`w-full bg-white border border-nothing-dark/10 rounded-xl px-4 py-3 font-mono font-bold text-nothing-dark focus:border-nothing-accent focus:ring-4 focus:ring-nothing-accent/5 outline-none transition-all ${pnl && pnl > 0 ? 'text-trade-win' : pnl && pnl < 0 ? 'text-trade-loss' : ''}`}

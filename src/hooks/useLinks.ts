@@ -17,8 +17,9 @@ export const useLinksQuery = () => {
                 addToast('Failed to load links', 'error');
                 throw error;
             }
-            return data as LinkItem[];
+            return (data || []) as LinkItem[];
         },
+        staleTime: 1000 * 60, // 1 minute
     });
 };
 
@@ -32,17 +33,21 @@ export const useAddLinkMutation = () => {
             if (!user) throw new Error('User not logged in');
 
             const linkWithUser = { ...newLink, user_id: user.id };
+            console.log('Adding link payload:', linkWithUser);
             const { error } = await supabase.from('links').insert([linkWithUser]);
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase insert error:', error);
+                throw error;
+            }
             return linkWithUser;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['links'] });
             addToast("Link established.", 'success');
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error('Error adding link:', error);
-            addToast('Failed to add link', 'error');
+            addToast(`Failed to add link: ${error.message || 'Unknown error'}`, 'error');
         }
     });
 };
@@ -53,17 +58,21 @@ export const useUpdateLinkMutation = () => {
 
     return useMutation({
         mutationFn: async ({ id, updates }: { id: string; updates: Partial<LinkItem> }) => {
+            console.log('Updating link payload:', { id, updates });
             const { error } = await supabase.from('links').update(updates).eq('id', id);
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase update error:', error);
+                throw error;
+            }
             return { id, updates };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['links'] });
             addToast("Link updated.", 'success');
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error('Error updating link:', error);
-            addToast('Failed to update link', 'error');
+            addToast(`Failed to update link: ${error.message || 'Unknown error'}`, 'error');
         }
     });
 };

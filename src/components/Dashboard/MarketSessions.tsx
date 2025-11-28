@@ -29,7 +29,7 @@ export const MarketSessions: React.FC = () => {
 
     return (
         <div
-            className="w-full h-full backdrop-blur-md border border-nothing-dark/10 rounded-3xl p-5 shadow-xl flex flex-col relative overflow-hidden group bg-nothing-base/50"
+            className="w-full h-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-5 shadow-2xl flex flex-col relative overflow-hidden group"
         >
             {/* Header */}
             <div className="flex justify-between items-center mb-3 z-10">

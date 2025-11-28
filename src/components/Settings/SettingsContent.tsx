@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Settings, Wallet, Globe } from 'lucide-react';
 import { AppSettings } from '../../types';
+import { Dropdown } from '../UI/Dropdown';
 
 interface SettingsContentProps {
     onSave: (settings: AppSettings) => void;
@@ -27,8 +28,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initia
     return (
         <div className="w-full max-w-2xl mx-auto">
             <div
-                className="w-full backdrop-blur-md border border-nothing-dark/5 rounded-3xl p-8 shadow-xl overflow-hidden relative"
-                style={{ backgroundColor: `rgba(67, 86, 99, var(--bento-opacity))` }}
+                className="w-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-8 shadow-2xl overflow-hidden relative"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
@@ -55,7 +55,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initia
                                 step="any"
                                 value={balance}
                                 onChange={(e) => setBalance(e.target.value)}
-                                className="w-full bg-nothing-dark/5 border border-transparent rounded-xl px-4 py-4 font-mono text-xl focus:bg-white focus:border-nothing-dark/10 focus:outline-none focus:ring-4 focus:ring-nothing-dark/5 transition-all placeholder:text-nothing-dark/20"
+                                className="w-full bg-nothing-dark/5 border border-transparent rounded-xl px-4 py-4 font-mono text-xl focus:bg-white focus:text-nothing-base focus:border-nothing-dark/10 focus:outline-none focus:ring-4 focus:ring-nothing-dark/5 transition-all placeholder:text-nothing-dark/20"
                                 placeholder="10000.00"
                             />
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-nothing-dark/20 font-mono text-sm pointer-events-none">
@@ -74,21 +74,16 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initia
                             <label className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40">Base Currency</label>
                         </div>
                         <div className="relative">
-                            <select
+                            <Dropdown
                                 value={currency}
-                                onChange={(e) => setCurrency(e.target.value)}
-                                className="w-full bg-nothing-dark/5 border border-transparent rounded-xl px-4 py-4 font-mono text-lg focus:bg-white focus:border-nothing-dark/10 focus:outline-none focus:ring-4 focus:ring-nothing-dark/5 transition-all appearance-none cursor-pointer"
-                            >
-                                <option value="USD">USD ($) - US Dollar</option>
-                                <option value="EUR">EUR (€) - Euro</option>
-                                <option value="GBP">GBP (£) - British Pound</option>
-                                <option value="JPY">JPY (¥) - Japanese Yen</option>
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-nothing-dark/40" />
-                                </svg>
-                            </div>
+                                onChange={(val) => setCurrency(val as string)}
+                                options={[
+                                    { value: 'USD', label: 'USD ($) - US Dollar' },
+                                    { value: 'EUR', label: 'EUR (€) - Euro' },
+                                    { value: 'GBP', label: 'GBP (£) - British Pound' },
+                                    { value: 'JPY', label: 'JPY (¥) - Japanese Yen' }
+                                ]}
+                            />
                         </div>
                     </div>
 
