@@ -23,7 +23,7 @@ export const DailyStats: React.FC<DailyStatsProps> = ({ links = [] }) => {
     const winRate = totalTrades > 0 ? Math.round((winCount / totalTrades) * 100) : 0;
 
     // Circular Progress Calculation
-    const radius = 24;
+    const radius = 20;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (winRate / 100) * circumference;
 

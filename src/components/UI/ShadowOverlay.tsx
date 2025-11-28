@@ -57,8 +57,8 @@ const useInstanceId = (): string => {
 export function ShadowOverlay({
     sizing = 'fill',
     color = 'rgba(128, 128, 128, 1)',
-    animation = { scale: 100, speed: 50 },
-    noise = { opacity: 0.05, scale: 1 },
+    animation,
+    noise,
     style,
     className
 }: ShadowOverlayProps) {
@@ -123,7 +123,7 @@ export function ShadowOverlay({
                             <filter id={id}>
                                 <feTurbulence
                                     result="undulation"
-                                    numOctaves="2"
+                                    numOctaves="4"
                                     baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`}
                                     seed="0"
                                     type="turbulence"
@@ -177,7 +177,7 @@ export function ShadowOverlay({
                         backgroundImage: `url("https://framerusercontent.com/images/g0QcWrxr87K0ufOxIUFBakwYA8.png")`,
                         backgroundSize: noise.scale * 200,
                         backgroundRepeat: "repeat",
-                        opacity: noise.opacity / 2
+                        opacity: noise.opacity
                     }}
                 />
             )}

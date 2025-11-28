@@ -32,7 +32,7 @@ export const MarketSessions: React.FC = () => {
             className="w-full h-full backdrop-blur-md border border-nothing-dark/10 rounded-3xl p-5 shadow-xl flex flex-col relative overflow-hidden group bg-nothing-base/50"
         >
             {/* Header */}
-            <div className="flex justify-between items-center mb-4 z-10">
+            <div className="flex justify-between items-center mb-3 z-10">
                 <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-nothing-dark/50">
                     Market Sessions
                 </div>
@@ -41,90 +41,62 @@ export const MarketSessions: React.FC = () => {
                 </div>
             </div>
 
-            <div className="relative flex-grow flex flex-col justify-between z-10">
-                {/* Time Grid Lines */}
-                <div className="absolute inset-0 pointer-events-none">
-                    {[0, 4, 8, 12, 16, 20, 24].map(h => (
-                        <div
-                            key={h}
-                            className="absolute top-0 bottom-0 border-l border-nothing-dark/5"
-                            style={{ left: `${getPosition(h)}%` }}
-                        >
-                            <span className="absolute -bottom-4 -left-2 text-[8px] font-mono text-nothing-dark/30">
-                                {String(h).padStart(2, '0')}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-
+            <div className="relative flex-grow flex flex-col justify-center gap-3 z-10">
                 {/* Sessions */}
-                <div className="flex flex-col gap-3 relative">
-                    {sessions.map((session, idx) => {
-                        const isActive = isSessionActive(session.start, session.end, currentUtcHour);
+                {sessions.map((session, idx) => {
+                    const isActive = isSessionActive(session.start, session.end, currentUtcHour);
 
-                        return (
-                            <div key={session.name} className="relative h-4 flex items-center">
-                                {/* Label */}
-                                <div className="absolute -left-1 w-8 text-[9px] font-mono font-bold text-nothing-dark/60 z-20 bg-nothing-base/80 backdrop-blur-sm pr-1">
-                                    {session.name}
-                                </div>
+                    return (
+                        <div key={session.name} className="relative h-2 flex items-center w-full">
+                            {/* Label */}
+                            <div className="absolute -left-1 w-8 text-[9px] font-mono font-bold text-nothing-dark/40 z-20 pr-1">
+                                {session.name}
+                            </div>
 
-                                {/* Track */}
-                                <div className="absolute left-0 right-0 h-[2px] bg-nothing-dark/5 top-1/2 -translate-y-1/2" />
-
-                                {/* Active Segment */}
-                                <div className="absolute top-0 bottom-0 w-full h-full">
-                                    {session.start < session.end ? (
+                            {/* Active Segment */}
+                            <div className="absolute left-8 right-0 h-full">
+                                {session.start < session.end ? (
+                                    <div
+                                        className={`absolute h-full rounded-full transition-all duration-500 ${isActive ? session.color : 'bg-nothing-dark/10'}`}
+                                        style={{
+                                            left: `${getPosition(session.start)}%`,
+                                            width: `${getPosition(session.end - session.start)}%`,
+                                            opacity: isActive ? 0.8 : 0.3
+                                        }}
+                                    />
+                                ) : (
+                                    <>
                                         <div
-                                            className={`absolute h-1.5 top-1/2 -translate-y-1/2 rounded-full transition-all duration-500 ${isActive ? session.color : 'bg-nothing-dark/20'}`}
+                                            className={`absolute h-full rounded-l-full transition-all duration-500 ${isActive ? session.color : 'bg-nothing-dark/10'}`}
                                             style={{
                                                 left: `${getPosition(session.start)}%`,
-                                                width: `${getPosition(session.end - session.start)}%`,
-                                                opacity: isActive ? 1 : 0.5
+                                                right: 0,
+                                                opacity: isActive ? 0.8 : 0.3
                                             }}
                                         />
-                                    ) : (
-                                        <>
-                                            <div
-                                                className={`absolute h-1.5 top-1/2 -translate-y-1/2 rounded-l-full transition-all duration-500 ${isActive ? session.color : 'bg-nothing-dark/20'}`}
-                                                style={{
-                                                    left: `${getPosition(session.start)}%`,
-                                                    right: 0,
-                                                    opacity: isActive ? 1 : 0.5
-                                                }}
-                                            />
-                                            <div
-                                                className={`absolute h-1.5 top-1/2 -translate-y-1/2 rounded-r-full transition-all duration-500 ${isActive ? session.color : 'bg-nothing-dark/20'}`}
-                                                style={{
-                                                    left: 0,
-                                                    width: `${getPosition(session.end)}%`,
-                                                    opacity: isActive ? 1 : 0.5
-                                                }}
-                                            />
-                                        </>
-                                    )}
-                                </div>
+                                        <div
+                                            className={`absolute h-full rounded-r-full transition-all duration-500 ${isActive ? session.color : 'bg-nothing-dark/10'}`}
+                                            style={{
+                                                left: 0,
+                                                width: `${getPosition(session.end)}%`,
+                                                opacity: isActive ? 0.8 : 0.3
+                                            }}
+                                        />
+                                    </>
+                                )}
                             </div>
-                        );
-                    })}
-                </div>
+                        </div>
+                    );
+                })}
 
                 {/* Current Time Cursor */}
                 <div
-                    className="absolute top-0 bottom-0 w-[1px] bg-nothing-accent z-30 transition-all duration-1000 shadow-[0_0_10px_rgba(163,176,135,0.5)]"
-                    style={{ left: `${getPosition(currentUtcHour)}%` }}
+                    className="absolute top-0 bottom-0 w-[1px] bg-nothing-accent/50 z-30 transition-all duration-1000"
+                    style={{ left: `calc(2rem + ((100% - 2rem) * ${currentUtcHour / 24}))` }}
                 >
-                    <div className="absolute -top-1 -left-[2px] w-1.5 h-1.5 bg-nothing-accent rounded-full animate-pulse" />
+                    <div className="absolute -top-1 -left-[2px] w-1.5 h-1.5 bg-nothing-accent rounded-full animate-pulse shadow-[0_0_8px_rgba(163,176,135,0.8)]" />
                 </div>
             </div>
-
-            {/* Background Decoration - Dot Matrix */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none"
-                style={{
-                    backgroundImage: 'radial-gradient(#435663 1px, transparent 1px)',
-                    backgroundSize: '12px 12px'
-                }}
-            ></div>
         </div>
     );
 };

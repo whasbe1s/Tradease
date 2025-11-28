@@ -23,9 +23,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <div className="fixed inset-0 z-0">
                 <ShadowOverlay
                     className="absolute inset-0"
-                    color="rgba(128, 128, 128, 1)"
                     animation={{ scale: 100, speed: 50 }}
-                    noise={{ opacity: 0.05, scale: 1 }}
+                    noise={{ opacity: 0.2, scale: 1 }}
                 />
             </div>
 

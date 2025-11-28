@@ -15,17 +15,17 @@ export const EconomicCalendar: React.FC = () => {
     // Process events when they change
     useEffect(() => {
         if (events.length > 0) {
-            // Filter for USD events for today only
+            // Filter for USD events OR High impact events for today
             const todayStr = new Date().toISOString().split('T')[0];
-            const usdEvents = events.filter(e =>
-                e.currency === 'USD' && e.date === todayStr
+            const relevantEvents = events.filter(e =>
+                e.date === todayStr && (e.currency === 'USD' || e.impact === 'high')
             );
 
-            setDisplayEvents(usdEvents);
+            setDisplayEvents(relevantEvents);
 
             // Find next upcoming event for countdown
             const now = new Date();
-            const next = usdEvents.find(e => {
+            const next = relevantEvents.find(e => {
                 const eventDate = new Date(`${e.date}T${e.time}`);
                 return eventDate > now;
             });
@@ -117,8 +117,13 @@ export const EconomicCalendar: React.FC = () => {
                                 </>
                             ) : (
                                 <>
-                                    <ScanLine size={24} className="mb-2 opacity-50" />
-                                    <p className="text-xs font-mono">NO_DATA_FOUND</p>
+                                    <div className="w-12 h-12 rounded-full bg-nothing-dark/5 flex items-center justify-center mb-3">
+                                        <ScanLine size={20} className="opacity-50" />
+                                    </div>
+                                    <p className="text-xs font-mono font-bold text-nothing-dark/60 mb-1">NO EVENTS</p>
+                                    <p className="text-[10px] font-mono text-nothing-dark/40 max-w-[150px]">
+                                        No high-impact or USD news scheduled for today.
+                                    </p>
                                 </>
                             )}
                         </div>

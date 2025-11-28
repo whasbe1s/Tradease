@@ -131,6 +131,29 @@ serve(async (req) => {
             const generatedContent = await model.generateContent(prompt);
             const response = await generatedContent.response;
             result = response.text();
+        } else if (type === 'parse_trade') {
+            const prompt = `
+                Extract trading data from this text: "${data.text}"
+                
+                Return a JSON object with these keys (use null if missing):
+                - pair (string, e.g. "EURUSD", "BTCUSD")
+                - direction ("long" or "short")
+                - entry_price (number)
+                - exit_price (number)
+                - stop_loss (number)
+                - take_profit (number)
+                - quantity (number)
+                - outcome ("win", "loss", "be", "pending")
+                - notes (string, summary of the trade)
+
+                Example input: "Long BTC at 50000, sl 49000, tp 52000"
+                Example output: {"pair": "BTCUSD", "direction": "long", "entry_price": 50000, "stop_loss": 49000, "take_profit": 52000, ...}
+
+                Return ONLY raw JSON.
+            `;
+            const generatedContent = await model.generateContent(prompt);
+            const response = await generatedContent.response;
+            result = response.text();
         } else {
             throw new Error(`Unknown analysis type: ${type}`);
         }

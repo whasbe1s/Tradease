@@ -1,4 +1,5 @@
 import React from 'react';
+import { BookOpen } from 'lucide-react';
 import { JournalToolbar } from './JournalToolbar';
 import { TradeList } from './TradeList';
 import { BulkActionBar } from '../LinkList/BulkActionBar';
@@ -46,12 +47,15 @@ export const JournalSection: React.FC<JournalSectionProps> = ({ onEdit }) => {
                 {/* Trade List Content */}
                 <div className="flex-1 overflow-hidden mt-4 relative z-10">
                     {filteredLinks.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center border border-dashed border-nothing-dark/10 rounded-2xl bg-nothing-dark/5">
+                        <div className="flex flex-col items-center justify-center h-full text-center py-8 text-nothing-dark/40">
+                            <div className="w-12 h-12 rounded-full bg-nothing-dark/5 flex items-center justify-center mb-3">
+                                <BookOpen size={20} className="opacity-50" />
+                            </div>
                             <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-nothing-dark/40 mb-2">
                                 {searchQuery ? 'NO_MATCHES_FOUND' : 'JOURNAL_EMPTY'}
                             </p>
-                            <p className="text-xs text-nothing-dark/30 font-mono">
-                                {searchQuery ? 'ADJUST_SEARCH_PARAMETERS' : 'LOG_FIRST_ENTRY_TO_BEGIN'}
+                            <p className="text-xs text-nothing-dark/30 font-mono max-w-[200px]">
+                                {searchQuery ? 'Try adjusting your search or filters.' : 'Start logging your trades to build your edge.'}
                             </p>
                         </div>
                     ) : (

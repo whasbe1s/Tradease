@@ -157,7 +157,27 @@ export const analyzeMarketOutlook = async (eventsText: string): Promise<string> 
     });
     return result || "Failed to generate market outlook.";
   } catch (error) {
-    console.error("Market Outlook Analysis Error:", error);
+    throw error;
+  }
+};
+
+export const parseTradeLog = async (text: string): Promise<any> => {
+  try {
+    const resultText = await invokeAiAnalysis('parse_trade', {
+      text
+    });
+
+    let jsonStr = resultText;
+    const jsonMatch = resultText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
+    } else {
+      jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+    }
+
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("Parse Trade Log Error:", error);
     throw error;
   }
 };

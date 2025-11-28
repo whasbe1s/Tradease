@@ -53,7 +53,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </div>
 
                 {/* BOTTOM: Trade Journal (Full Width) */}
-                <div className="lg:col-span-3 mt-4">
+                <div className="lg:col-span-3">
                     <JournalSection onEdit={handleEditLink} />
                 </div>
             </div>
