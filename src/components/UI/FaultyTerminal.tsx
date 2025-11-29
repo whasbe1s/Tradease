@@ -123,6 +123,7 @@ float digit(vec2 p){
     
     if(uUseMouse > 0.5){
         vec2 mouseWorld = uMouse * uScale;
+        mouseWorld.x *= iResolution.x / iResolution.y;
         float distToMouse = distance(s, mouseWorld);
         float mouseInfluence = exp(-distToMouse * 8.0) * uMouseStrength * 10.0;
         intensity += mouseInfluence;
