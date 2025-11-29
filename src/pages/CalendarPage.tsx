@@ -7,6 +7,7 @@ import { useToast } from '../hooks/useToast';
 import { useEconomicCalendar } from '../hooks/useEconomicCalendar';
 
 import { Dropdown } from '../components/UI/Dropdown';
+import { DotPattern } from '../components/UI/DotPattern';
 
 
 export const CalendarPage: React.FC = () => {
@@ -237,6 +238,7 @@ export const CalendarPage: React.FC = () => {
                     </div>
                 )}
             </div>
+            <DotPattern opacity={0.03} />
         </div>
     );
 };

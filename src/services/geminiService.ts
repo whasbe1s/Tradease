@@ -160,3 +160,27 @@ export const analyzeMarketOutlook = async (eventsText: string): Promise<string> 
     throw error;
   }
 };
+
+export const analyzeTradePerformance = async (trades: any[], context?: string): Promise<string> => {
+  try {
+    // Format trades for analysis
+    const tradeSummary = trades.map(t => ({
+      date: t.created_at,
+      pair: t.pair,
+      outcome: t.outcome,
+      pnl: t.pnl,
+      setup: t.setup,
+      mistakes: t.mistakes,
+      notes: t.notes
+    }));
+
+    const result = await invokeAiAnalysis('trade_performance', {
+      trades: tradeSummary,
+      context
+    });
+    return result || "Failed to analyze trade performance.";
+  } catch (error) {
+    console.error("Trade Analysis Error:", error);
+    throw error;
+  }
+};

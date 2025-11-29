@@ -45,7 +45,7 @@ export const EquityCurveWidget: React.FC<EquityCurveWidgetProps> = ({ links }) =
             </div>
 
             {/* Chart */}
-            <div className="flex-1 w-full min-h-[200px] -ml-2">
+            <div className="flex-1 w-full min-h-0 -ml-2">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={stats.pnlCurve}>
                         <defs>

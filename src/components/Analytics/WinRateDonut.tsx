@@ -25,7 +25,7 @@ export const WinRateDonut: React.FC<WinRateDonutProps> = ({ wins, losses, breake
                 <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-nothing-base/60">Win Rate</div>
             </div>
 
-            <div className="flex-1 relative">
+            <div className="flex-1 relative min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie

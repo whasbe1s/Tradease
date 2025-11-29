@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Save, Settings, Wallet, Globe } from 'lucide-react';
 import { AppSettings } from '../../types';
 import { Dropdown } from '../UI/Dropdown';
+import { DotPattern } from '../UI/DotPattern';
 
 import { useTheme } from '../../context/ThemeContext';
 
@@ -11,7 +12,7 @@ interface SettingsContentProps {
 }
 
 export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initialSettings }) => {
-    const { glassOpacity, setGlassOpacity } = useTheme();
+    const { glassOpacity, setGlassOpacity, backgroundSettings, setBackgroundSettings } = useTheme();
     const [balance, setBalance] = useState<string>(initialSettings.startingBalance.toString());
     const [currency, setCurrency] = useState<string>(initialSettings.currency);
 
@@ -97,6 +98,82 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initia
                         </p>
                     </div>
 
+                    {/* Background Configuration */}
+                    <div className="space-y-6 pt-6 border-t border-nothing-dark/5">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Settings size={16} className="text-nothing-dark/40" />
+                            <label className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40">Background Configuration</label>
+                        </div>
+
+                        {/* Scale */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-nothing-dark/60 font-mono">
+                                <span>Scale</span>
+                                <span>{backgroundSettings.scale}</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max="10"
+                                step="0.1"
+                                value={backgroundSettings.scale}
+                                onChange={(e) => setBackgroundSettings({ ...backgroundSettings, scale: parseFloat(e.target.value) })}
+                                className="w-full h-2 bg-nothing-dark/20 rounded-lg appearance-none cursor-pointer accent-nothing-accent"
+                            />
+                        </div>
+
+                        {/* Scanline Intensity */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-nothing-dark/60 font-mono">
+                                <span>Scanline Intensity</span>
+                                <span>{backgroundSettings.scanlineIntensity}</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="2"
+                                step="0.1"
+                                value={backgroundSettings.scanlineIntensity}
+                                onChange={(e) => setBackgroundSettings({ ...backgroundSettings, scanlineIntensity: parseFloat(e.target.value) })}
+                                className="w-full h-2 bg-nothing-dark/20 rounded-lg appearance-none cursor-pointer accent-nothing-accent"
+                            />
+                        </div>
+
+                        {/* Noise Amplitude */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-nothing-dark/60 font-mono">
+                                <span>Noise Amplitude</span>
+                                <span>{backgroundSettings.noiseAmp}</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="5"
+                                step="0.1"
+                                value={backgroundSettings.noiseAmp}
+                                onChange={(e) => setBackgroundSettings({ ...backgroundSettings, noiseAmp: parseFloat(e.target.value) })}
+                                className="w-full h-2 bg-nothing-dark/20 rounded-lg appearance-none cursor-pointer accent-nothing-accent"
+                            />
+                        </div>
+
+                        {/* Brightness */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-nothing-dark/60 font-mono">
+                                <span>Brightness</span>
+                                <span>{backgroundSettings.brightness}</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0"
+                                max="2"
+                                step="0.1"
+                                value={backgroundSettings.brightness}
+                                onChange={(e) => setBackgroundSettings({ ...backgroundSettings, brightness: parseFloat(e.target.value) })}
+                                className="w-full h-2 bg-nothing-dark/20 rounded-lg appearance-none cursor-pointer accent-nothing-accent"
+                            />
+                        </div>
+                    </div>
+
                     {/* Currency */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-2">
@@ -130,6 +207,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initia
 
                 {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-nothing-dark/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                <DotPattern opacity={0.05} />
             </div>
         </div>
     );

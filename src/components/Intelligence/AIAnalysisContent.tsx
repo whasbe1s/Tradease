@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Sparkles, Upload, Image as ImageIcon, Loader2, X, MessageSquare, FileText } from 'lucide-react';
-import { analyzeChart, analyzeSentiment } from '../../services/geminiService';
+import React, { useState } from 'react';
+import { Sparkles, Loader2, MessageSquare, FileText, BarChart2 } from 'lucide-react';
+import { analyzeTradePerformance, analyzeSentiment } from '../../services/geminiService';
+import { useLinksContext } from '../../context/LinksContext';
 import ReactMarkdown from 'react-markdown';
 
 interface AIAnalysisContentProps {
@@ -8,46 +9,15 @@ interface AIAnalysisContentProps {
 }
 
 export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }) => {
-    const [mode, setMode] = useState<'chart' | 'text'>('chart');
+    const { links } = useLinksContext();
+    const [mode, setMode] = useState<'trades' | 'text'>('trades');
     const [input, setInput] = useState('');
-    const [image, setImage] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImage(reader.result as string);
-                setResult(null);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handlePaste = (e: React.ClipboardEvent) => {
-        const items = e.clipboardData.items;
-        for (let i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf('image') !== -1) {
-                const blob = items[i].getAsFile();
-                if (blob) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        setImage(reader.result as string);
-                        setResult(null);
-                        setMode('chart');
-                    };
-                    reader.readAsDataURL(blob);
-                }
-            }
-        }
-    };
 
     const handleAnalyze = async () => {
-        if (mode === 'chart' && !image) {
-            addToast('Please upload or paste a chart image first.', 'error');
+        if (mode === 'trades' && links.length === 0) {
+            addToast('No trades found to analyze.', 'error');
             return;
         }
         if (mode === 'text' && !input.trim()) {
@@ -60,10 +30,8 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
 
         try {
             let analysis = '';
-            if (mode === 'chart' && image) {
-                // Remove data:image/png;base64, prefix
-                const base64Image = image.split(',')[1];
-                analysis = await analyzeChart(base64Image, input);
+            if (mode === 'trades') {
+                analysis = await analyzeTradePerformance(links, input);
             } else {
                 analysis = await analyzeSentiment(input);
             }
@@ -96,12 +64,13 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
                     {/* Mode Switcher */}
                     <div className="flex bg-nothing-dark/5 p-1 rounded-full">
                         <button
-                            className={`px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-2 ${mode === 'chart'
+                            onClick={() => setMode('trades')}
+                            className={`px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-2 ${mode === 'trades'
                                 ? 'bg-nothing-accent text-nothing-base shadow-sm font-bold'
                                 : 'text-nothing-dark/40 hover:text-nothing-dark/60'
                                 }`}
                         >
-                            <ImageIcon size={14} /> Chart
+                            <BarChart2 size={14} /> Trades
                         </button>
                         <button
                             onClick={() => setMode('text')}
@@ -116,49 +85,33 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-y-auto mb-6 space-y-6 pr-2" onPaste={handlePaste}>
-                    {mode === 'chart' ? (
+                <div className="flex-1 overflow-y-auto mb-6 space-y-6 pr-2">
+                    {mode === 'trades' ? (
                         <div className="space-y-6">
-                            {!image ? (
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="border-2 border-dashed border-nothing-dark/10 rounded-2xl p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-nothing-dark/5 hover:border-nothing-dark/20 transition-all group h-64"
-                                >
-                                    <div className="w-16 h-16 bg-nothing-dark/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                        <Upload size={24} className="text-nothing-dark/40" />
+                            <div className="bg-nothing-dark/5 rounded-2xl p-6 border border-nothing-dark/5">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-12 h-12 rounded-full bg-nothing-dark/10 flex items-center justify-center text-nothing-dark/60">
+                                        <BarChart2 size={24} />
                                     </div>
-                                    <p className="font-mono text-nothing-dark/40 uppercase tracking-widest text-center text-xs">
-                                        Paste chart image (Ctrl+V)<br />or click to upload
-                                    </p>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={handleImageUpload}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="relative group rounded-2xl overflow-hidden border border-nothing-dark/10 shadow-lg">
-                                    <img src={image} alt="Chart to analyze" className="w-full" />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-start justify-end p-4 opacity-0 group-hover:opacity-100">
-                                        <button
-                                            onClick={() => { setImage(null); setResult(null); }}
-                                            className="bg-white/90 p-2 rounded-full shadow-lg hover:bg-red-50 hover:text-red-500 transition-colors backdrop-blur-sm"
-                                        >
-                                            <X size={16} />
-                                        </button>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-nothing-dark">Trade Performance Analysis</h3>
+                                        <p className="text-xs text-nothing-dark/60 font-mono mt-1">
+                                            Ready to analyze {links.length} logged trades
+                                        </p>
                                     </div>
                                 </div>
-                            )}
+                                <p className="text-xs text-nothing-dark/60 leading-relaxed">
+                                    The AI will review your trade history, including PnL, win rate, setups, and notes, to identify patterns, strengths, and areas for improvement. Add specific questions below to guide the analysis.
+                                </p>
+                            </div>
 
                             <div className="bg-nothing-dark/5 rounded-2xl p-4">
                                 <textarea
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
-                                    placeholder="Add context (e.g., 'H4 timeframe, looking for longs')..."
+                                    placeholder="Add context (e.g., 'Why is my win rate low on EURUSD?', 'Analyze my risk management')..."
                                     className="w-full bg-transparent border-none font-mono text-sm focus:outline-none resize-none placeholder:text-nothing-dark/30"
-                                    rows={2}
+                                    rows={3}
                                 />
                             </div>
                         </div>
@@ -191,10 +144,10 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
                 <div className="pt-4 border-t border-nothing-dark/5">
                     <button
                         onClick={handleAnalyze}
-                        disabled={isAnalyzing || (mode === 'chart' && !image) || (mode === 'text' && !input)}
+                        disabled={isAnalyzing || (mode === 'text' && !input)}
                         className={`
                             w-full py-4 rounded-xl font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all
-                            ${isAnalyzing || (mode === 'chart' && !image) || (mode === 'text' && !input)
+                            ${isAnalyzing || (mode === 'text' && !input)
                                 ? 'bg-nothing-dark/5 text-nothing-dark/20 cursor-not-allowed'
                                 : 'bg-nothing-dark text-nothing-base hover:bg-nothing-dark/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg'
                             }

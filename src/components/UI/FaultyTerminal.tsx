@@ -213,6 +213,7 @@ void main() {
     }
     
     vec2 p = uv * uScale;
+    p.x *= iResolution.x / iResolution.y;
     vec3 col = getColor(p);
 
     if(uChromaticAberration != 0.0){
@@ -245,9 +246,11 @@ function hexToRgb(hex: string): [number, number, number] {
     return [((num >> 16) & 255) / 255, ((num >> 8) & 255) / 255, (num & 255) / 255];
 }
 
-export default function FaultyTerminal({
+const defaultGridMul: Vec2 = [2, 1];
+
+const FaultyTerminal = React.memo(({
     scale = 1,
-    gridMul = [2, 1],
+    gridMul = defaultGridMul,
     digitSize = 1.5,
     timeScale = 0.3,
     pause = false,
@@ -268,7 +271,7 @@ export default function FaultyTerminal({
     className,
     style,
     ...rest
-}: FaultyTerminalProps) {
+}: FaultyTerminalProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const programRef = useRef<Program>(null);
     const rendererRef = useRef<Renderer>(null);
@@ -376,7 +379,7 @@ export default function FaultyTerminal({
             }
 
             if (mouseReact) {
-                const dampingFactor = 0.08;
+                const dampingFactor = 0.25;
                 const smoothMouse = smoothMouseRef.current;
                 const mouse = mouseRef.current;
                 smoothMouse.x += (mouse.x - smoothMouse.x) * dampingFactor;
@@ -429,4 +432,6 @@ export default function FaultyTerminal({
     return (
         <div ref={containerRef} className={`w-full h-full relative overflow-hidden ${className}`} style={style} {...rest} />
     );
-}
+});
+
+export default FaultyTerminal;
