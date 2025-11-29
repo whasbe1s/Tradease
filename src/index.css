@@ -18,7 +18,12 @@
 
 :root {
   --bento-opacity: 0.8;
+  --glass-opacity: 0.4;
   /* Global bento box opacity */
+}
+
+.bg-glass {
+  background-color: rgba(3, 7, 30, var(--glass-opacity));
 }
 
 body {

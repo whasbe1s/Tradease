@@ -33,7 +33,7 @@ export const useAddLinkMutation = () => {
             if (!user) throw new Error('User not logged in');
 
             const linkWithUser = { ...newLink, user_id: user.id };
-            console.log('Adding link payload:', linkWithUser);
+
             const { error } = await supabase.from('links').insert([linkWithUser]);
             if (error) {
                 console.error('Supabase insert error:', error);
@@ -58,7 +58,7 @@ export const useUpdateLinkMutation = () => {
 
     return useMutation({
         mutationFn: async ({ id, updates }: { id: string; updates: Partial<LinkItem> }) => {
-            console.log('Updating link payload:', { id, updates });
+
             const { error } = await supabase.from('links').update(updates).eq('id', id);
             if (error) {
                 console.error('Supabase update error:', error);

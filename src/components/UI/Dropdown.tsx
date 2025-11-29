@@ -17,6 +17,7 @@ interface DropdownProps {
     placeholder?: string;
     className?: string;
     label?: string;
+    buttonClassName?: string;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -25,7 +26,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
     options,
     placeholder = 'Select...',
     className,
-    label
+    label,
+    buttonClassName
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -80,7 +82,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
                     "font-mono text-sm transition-all duration-300",
                     "hover:bg-nothing-dark/10",
                     "focus:outline-none focus:ring-2 focus:ring-nothing-accent/50",
-                    isOpen && "bg-nothing-base border-nothing-dark/10 shadow-lg ring-4 ring-nothing-dark/5"
+                    isOpen && "bg-nothing-base border-nothing-dark/10 shadow-lg ring-4 ring-nothing-dark/5",
+                    buttonClassName
                 )}
                 whileTap={{ scale: 0.98 }}
             >

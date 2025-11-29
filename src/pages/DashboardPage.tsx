@@ -4,7 +4,7 @@ import { EconomicCalendar } from '../components/Dashboard/EconomicCalendar';
 import { DailyStats } from '../components/Dashboard/DailyStats';
 import { EquityCurveWidget } from '../components/Dashboard/EquityCurveWidget';
 import { AIAnalysisWidget } from '../components/Dashboard/AIAnalysisWidget';
-import { Footer } from '../components/Layout/Footer';
+
 import { JournalSection } from '../components/Journal/JournalSection';
 import { LinkItem } from '../types';
 import { useLinksContext } from '../context/LinksContext';
@@ -58,7 +58,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 </div>
             </div>
 
-            <Footer links={links} />
+
         </>
     );
 };

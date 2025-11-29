@@ -31,7 +31,7 @@ export const JournalSection: React.FC<JournalSectionProps> = ({ onEdit }) => {
     return (
         <>
             <div
-                className="w-full h-full backdrop-blur-md border border-nothing-dark/10 rounded-3xl p-6 shadow-xl overflow-hidden flex flex-col bg-nothing-base/50 relative group"
+                className="w-full h-full backdrop-blur-md border border-nothing-dark/10 rounded-3xl p-6 shadow-xl overflow-hidden flex flex-col bg-glass relative group"
             >
                 {/* Unified Toolbar */}
                 <JournalToolbar

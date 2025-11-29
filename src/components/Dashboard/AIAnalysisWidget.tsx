@@ -61,7 +61,7 @@ export const AIAnalysisWidget: React.FC = () => {
 
     return (
         <div
-            className="w-full h-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-0 shadow-2xl flex flex-col relative overflow-hidden group"
+            className="w-full h-full backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col relative overflow-hidden group"
         >
             {/* Terminal Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-nothing-dark/10 bg-nothing-dark/5">

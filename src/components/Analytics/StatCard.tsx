@@ -14,7 +14,7 @@ interface StatCardProps {
 export const StatCard: React.FC<StatCardProps> = ({ label, value, subValue, icon: Icon, trend, color = 'text-nothing-dark', bgGlow = 'bg-nothing-dark/5' }) => {
     return (
         <div
-            className="backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col items-start justify-between relative overflow-hidden group h-full min-h-[140px]"
+            className="backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col items-start justify-between relative overflow-hidden group h-full min-h-[140px]"
         >
             <div className="flex justify-between w-full z-10">
                 <span className="text-[10px] font-mono uppercase text-nothing-dark/40 tracking-[0.2em]">{label}</span>

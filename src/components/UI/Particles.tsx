@@ -265,6 +265,7 @@ export const Particles: React.FC<ParticlesProps> = ({
             const remapClosestEdge = parseFloat(
                 remapValue(closestEdge, 0, 20, 0, 1).toFixed(2)
             )
+            // Fade out particles near the edges
             if (remapClosestEdge > 1) {
                 circle.alpha += 0.02
                 if (circle.alpha > circle.targetAlpha) {

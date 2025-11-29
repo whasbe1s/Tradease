@@ -39,7 +39,7 @@ export const useEconomicCalendar = () => {
                 const metadata: CacheMetadata = JSON.parse(cachedMetadataStr);
                 // Check if we are in a new week
                 if (metadata.weekStart !== currentMonday) {
-                    console.log("New week detected. Refreshing calendar.");
+
                     shouldFetch = true;
                 }
             }
@@ -65,7 +65,7 @@ export const useEconomicCalendar = () => {
                 // Load from cache
                 if (cachedData) {
                     setEvents(JSON.parse(cachedData));
-                    console.log("Loaded calendar from cache");
+
                 }
             }
         } catch (error) {

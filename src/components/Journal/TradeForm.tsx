@@ -92,7 +92,7 @@ export const TradeForm: React.FC<TradeFormProps> = ({ onSave }) => {
     return (
         <div className="w-full max-w-4xl mx-auto">
             <div
-                className="w-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl shadow-2xl relative"
+                className="w-full max-w-4xl mx-auto backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-8 shadow-2xl relative overflow-hidden"
             >
                 {/* Background & Decor (Overflow Hidden Here) */}
                 <div className="absolute inset-0 overflow-hidden rounded-3xl">

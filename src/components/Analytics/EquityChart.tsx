@@ -30,7 +30,7 @@ export const EquityChart: React.FC<EquityChartProps> = ({ data }) => {
 
     return (
         <div
-            className="w-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden h-[400px]"
+            className="w-full backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden h-[400px]"
         >
             <div className="flex items-center justify-between mb-6">
                 <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-nothing-base/60">Equity Curve</div>

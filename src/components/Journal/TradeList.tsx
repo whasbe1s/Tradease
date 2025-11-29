@@ -83,7 +83,8 @@ export const TradeList: React.FC<TradeListProps> = ({
     };
 
     const handleDuplicate = (trade: LinkItem) => {
-        console.log('Duplicate trade:', trade);
+        // TODO: Implement duplicate functionality
+        // console.log('Duplicate trade:', trade);
     };
 
     const toggleGroup = (label: string) => {

@@ -79,7 +79,7 @@ export const AIAnalysisContent: React.FC<AIAnalysisContentProps> = ({ addToast }
     return (
         <div className="w-full max-w-4xl mx-auto h-[calc(100vh-140px)] min-h-[600px]">
             <div
-                className="w-full h-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col relative overflow-hidden"
+                className="w-full h-full backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col relative overflow-hidden"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">

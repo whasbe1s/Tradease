@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from '../components/Layout/Header';
-import { ShadowOverlay } from '../components/UI/ShadowOverlay';
+import FaultyTerminal from '../components/UI/FaultyTerminal';
 import { Toast } from '../components/UI/Toast';
 import { ToastItem } from '../types';
 
@@ -19,12 +19,22 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     onOpenTradeModal
 }) => {
     return (
-        <div className="min-h-screen text-nothing-dark pb-32 selection:bg-nothing-accent selection:text-white flex flex-col relative">
+        <div className="min-h-screen text-nothing-dark selection:bg-nothing-accent selection:text-white flex flex-col relative">
             <div className="fixed inset-0 z-0">
-                <ShadowOverlay
+                <FaultyTerminal
                     className="absolute inset-0"
-                    animation={{ scale: 100, speed: 40 }}
-                    noise={{ opacity: 0.2, scale: 1.5 }}
+                    tint="#FFBA08"
+                    backgroundColor="#03071E"
+                    scale={3}
+                    digitSize={1.4}
+                    timeScale={0.8}
+                    noiseAmp={1}
+                    brightness={0.5}
+                    scanlineIntensity={1.3}
+                    curvature={0.22}
+                    mouseStrength={0.5}
+                    mouseReact={true}
+                    pageLoadAnimation={false}
                 />
             </div>
 
@@ -33,7 +43,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     onOpenTradeModal={onOpenTradeModal}
                 />
 
-                <main className="max-w-7xl mx-auto px-4 md:px-6 pt-26 flex-grow w-full">
+                <main className="max-w-7xl mx-auto px-4 md:px-6 pt-26 flex-grow w-full flex flex-col justify-center">
                     <Outlet />
                 </main>
 

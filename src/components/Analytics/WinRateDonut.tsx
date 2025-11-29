@@ -19,7 +19,7 @@ export const WinRateDonut: React.FC<WinRateDonutProps> = ({ wins, losses, breake
 
     return (
         <div
-            className="backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden h-full min-h-[300px] flex flex-col"
+            className="backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden h-full min-h-[300px] flex flex-col"
         >
             <div className="mb-4">
                 <div className="text-[10px] font-mono uppercase tracking-[0.5em] text-nothing-base/60">Win Rate</div>

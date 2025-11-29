@@ -89,7 +89,7 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
 
 export const parseEconomicEvents = async (htmlContent: string): Promise<EconomicEvent[]> => {
   try {
-    console.log("Raw HTML Length:", htmlContent.length);
+
     // Clean up HTML to focus on the calendar table
     // ForexFactory events are usually in a table with class "calendar__table"
     let cleanContent = htmlContent;
@@ -98,7 +98,7 @@ export const parseEconomicEvents = async (htmlContent: string): Promise<Economic
     const tableMatch = htmlContent.match(/<table[^>]*class="[^"]*calendar__table[^"]*"[^>]*>[\s\S]*?<\/table>/i);
     if (tableMatch) {
       cleanContent = tableMatch[0];
-      console.log("Found Calendar Table!");
+
     } else {
       // Fallback: Remove scripts, styles, and comments
       cleanContent = htmlContent
@@ -111,7 +111,7 @@ export const parseEconomicEvents = async (htmlContent: string): Promise<Economic
     // Limit length but keep enough for the table
     cleanContent = cleanContent.substring(0, 40000);
 
-    console.log("Cleaned Content Preview:", cleanContent.substring(0, 500));
+
 
     const resultText = await invokeAiAnalysis('parse_calendar', {
       htmlContent: cleanContent
@@ -120,7 +120,7 @@ export const parseEconomicEvents = async (htmlContent: string): Promise<Economic
     let text = resultText;
     if (!text) throw new Error("No response from AI");
 
-    console.log("AI Raw Response:", text);
+
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
@@ -130,7 +130,7 @@ export const parseEconomicEvents = async (htmlContent: string): Promise<Economic
     }
 
     const rawEvents = JSON.parse(text);
-    console.log("Parsed Events:", rawEvents);
+
 
     // Map to EconomicEvent type
     return rawEvents.map((e: any, index: number) => ({

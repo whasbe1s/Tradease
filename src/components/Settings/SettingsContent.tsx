@@ -3,12 +3,15 @@ import { Save, Settings, Wallet, Globe } from 'lucide-react';
 import { AppSettings } from '../../types';
 import { Dropdown } from '../UI/Dropdown';
 
+import { useTheme } from '../../context/ThemeContext';
+
 interface SettingsContentProps {
     onSave: (settings: AppSettings) => void;
     initialSettings: AppSettings;
 }
 
 export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initialSettings }) => {
+    const { glassOpacity, setGlassOpacity } = useTheme();
     const [balance, setBalance] = useState<string>(initialSettings.startingBalance.toString());
     const [currency, setCurrency] = useState<string>(initialSettings.currency);
 
@@ -28,7 +31,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initia
     return (
         <div className="w-full max-w-2xl mx-auto">
             <div
-                className="w-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-8 shadow-2xl overflow-hidden relative"
+                className="w-full backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-8 shadow-2xl overflow-hidden relative"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
@@ -64,6 +67,33 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({ onSave, initia
                         </div>
                         <p className="text-xs text-nothing-dark/40 pl-1">
                             This balance is used to calculate your total equity curve.
+                        </p>
+                    </div>
+
+                    {/* Opacity Setting */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Settings size={16} className="text-nothing-dark/40" />
+                            <label className="text-[10px] font-mono uppercase tracking-widest text-nothing-dark/40">Component Opacity</label>
+                        </div>
+                        <div className="relative group px-2">
+                            <input
+                                type="range"
+                                min="0.1"
+                                max="1.0"
+                                step="0.05"
+                                value={glassOpacity}
+                                onChange={(e) => setGlassOpacity(parseFloat(e.target.value))}
+                                className="w-full h-2 bg-nothing-dark/20 rounded-lg appearance-none cursor-pointer accent-nothing-accent"
+                            />
+                            <div className="flex justify-between mt-2 text-[10px] font-mono text-nothing-dark/40">
+                                <span>Transparent</span>
+                                <span>{Math.round(glassOpacity * 100)}%</span>
+                                <span>Solid</span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-nothing-dark/40 pl-1">
+                            Adjust the transparency of the every components.
                         </p>
                     </div>
 

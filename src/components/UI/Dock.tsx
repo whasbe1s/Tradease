@@ -1,5 +1,5 @@
 import * as React from "react"
-import { motion, Variants } from "framer-motion"
+import { motion } from "framer-motion"
 import { cn } from "../../lib/utils"
 import { LucideIcon } from "lucide-react"
 
@@ -21,17 +21,7 @@ interface DockIconButtonProps {
     isActive?: boolean
 }
 
-const floatingAnimation: Variants = {
-    initial: { y: 0 },
-    animate: {
-        y: [-2, 2, -2],
-        transition: {
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-        }
-    }
-}
+
 
 const DockIconButton = React.forwardRef<HTMLButtonElement, DockIconButtonProps>(
     ({ icon: Icon, label, onClick, className, isActive }, ref) => {
@@ -81,21 +71,18 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
     ({ items, className }, ref) => {
         return (
             <div ref={ref} className={cn("flex items-center justify-center", className)}>
-                <motion.div
-                    initial="initial"
-                    animate="animate"
-                    variants={floatingAnimation}
+                <div
                     className={cn(
                         "flex items-center gap-1 p-2 rounded-full",
                         "backdrop-blur-xl border shadow-2xl",
-                        "bg-nothing-base/40 border-white/10 ring-1 ring-white/5",
+                        "bg-glass border-white/10 ring-1 ring-white/5",
                         "hover:shadow-[0_0_20px_rgba(0,0,0,0.3)] transition-shadow duration-300"
                     )}
                 >
                     {items.map((item) => (
                         <DockIconButton key={item.label} {...item} />
                     ))}
-                </motion.div>
+                </div>
             </div>
         )
     }

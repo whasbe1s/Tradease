@@ -16,7 +16,7 @@ export const StatsContent: React.FC<StatsContentProps> = ({ stats }) => {
 
             {/* Header Section */}
             <div
-                className="w-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex items-center justify-between"
+                className="w-full backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex items-center justify-between"
             >
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-nothing-dark/5 rounded-full">

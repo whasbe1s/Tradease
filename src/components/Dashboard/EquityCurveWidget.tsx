@@ -27,7 +27,7 @@ export const EquityCurveWidget: React.FC<EquityCurveWidgetProps> = ({ links }) =
 
     return (
         <div
-            className="w-full h-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col relative overflow-hidden group"
+            className="w-full h-full backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col relative overflow-hidden group"
         >
             {/* Header */}
             <div className="flex items-center justify-between mb-2 z-10">
@@ -45,13 +45,13 @@ export const EquityCurveWidget: React.FC<EquityCurveWidgetProps> = ({ links }) =
             </div>
 
             {/* Chart */}
-            <div className="flex-1 w-full min-h-0 -ml-2">
+            <div className="flex-1 w-full min-h-[200px] -ml-2">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={stats.pnlCurve}>
                         <defs>
                             <linearGradient id="colorPnLWidget" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#A3B087" stopOpacity={0.2} />
-                                <stop offset="95%" stopColor="#A3B087" stopOpacity={0} />
+                                <stop offset="5%" stopColor="#E85D04" stopOpacity={0.2} />
+                                <stop offset="95%" stopColor="#E85D04" stopOpacity={0} />
                             </linearGradient>
                         </defs>
                         <Tooltip
@@ -61,7 +61,7 @@ export const EquityCurveWidget: React.FC<EquityCurveWidgetProps> = ({ links }) =
                         <Area
                             type="monotone"
                             dataKey="cumulative"
-                            stroke="#A3B087"
+                            stroke="#E85D04"
                             strokeWidth={2}
                             fillOpacity={1}
                             fill="url(#colorPnLWidget)"

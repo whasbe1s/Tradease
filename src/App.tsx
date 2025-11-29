@@ -4,6 +4,7 @@ import { MainLayout } from './layouts/MainLayout';
 import { LinkModal } from './components/Modals/LinkModal';
 import { LinksProvider, useLinksContext } from './context/LinksContext';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useToast } from './hooks/useToast';
 import { LinkItem, AppSettings } from './types';
@@ -121,7 +122,9 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
                 <LinksProvider>
-                    <AppContent />
+                    <ThemeProvider>
+                        <AppContent />
+                    </ThemeProvider>
                 </LinksProvider>
             </AuthProvider>
         </QueryClientProvider>

@@ -29,7 +29,7 @@ export const DailyStats: React.FC<DailyStatsProps> = ({ links = [] }) => {
 
     return (
         <div
-            className="w-full h-full backdrop-blur-xl bg-nothing-base/40 border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-between relative overflow-hidden group"
+            className="w-full h-full backdrop-blur-xl bg-glass border border-white/10 ring-1 ring-white/5 rounded-3xl p-6 shadow-2xl flex flex-col items-center justify-between relative overflow-hidden group"
         >
             {/* Header */}
             <div className="w-full flex justify-between items-start z-10">
